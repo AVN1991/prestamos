@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Préstamos">
+<meta name="theme-color" content="#0f0f0f">
+<title>Control de Préstamos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#242424;--border:#2e2e2e;
+  --text:#f0f0f0;--text2:#888;--text3:#555;
+  --green:#22c55e;--green-bg:#0d2e1c;
+  --amber:#f59e0b;--amber-bg:#2a1f08;
+  --red:#ef4444;--red-bg:#2a0f0f;
+  --blue:#60a5fa;--blue-bg:#0f1e2e;
+  --accent:#e8ff47;--accent-dark:#b8cc1a;
+  --radius:14px;--radius-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;min-height:-webkit-fill-available;overscroll-behavior:none;}
+.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+.topbar{padding:52px 20px 16px;display:flex;align-items:flex-end;justify-content:space-between}
+.topbar h1{font-size:26px;font-weight:600;letter-spacing:-0.5px}
+.topbar .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-bottom:5px}
+.content{flex:1;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch}
+.nav{display:flex;gap:0;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:0.5px solid var(--border);position:sticky;bottom:0}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;cursor:pointer;padding:6px 4px;border-radius:10px;transition:all .15s;letter-spacing:0.3px;text-transform:uppercase}
+.nav button .icon{font-size:20px;line-height:1}
+.nav button.active{color:var(--accent)}
+.nav button.active .icon{transform:scale(1.1)}
+.screen{display:none;animation:fadeIn .2s ease}.screen.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.8px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;letter-spacing:0.3px}
+.field input,.field select{width:100%;padding:13px 14px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;-webkit-appearance:none;appearance:none;transition:border-color .15s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.field input::placeholder{color:var(--text3)}
+.field select option{background:var(--bg3)}
+.monto-wrap{position:relative}
+.monto-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text2);pointer-events:none;font-family:'DM Sans',sans-serif}
+.monto-wrap input{padding-left:28px !important}
+.btn{width:100%;padding:15px;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;margin-top:6px;transition:all .15s;letter-spacing:-0.2px}
+.btn:active{transform:scale(0.98);background:var(--accent-dark)}
+.btn.sec{background:transparent;color:var(--text2);border:0.5px solid var(--border)}
+.btn.danger{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red)}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--accent);color:#0a0a0a;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:14px}
+.metric .val{font-size:18px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:-0.5px}
+.metric .lbl{font-size:11px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:0.5px}
+.metric.hi .val{color:var(--green)}.metric.ac .val{color:var(--accent)}
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:0.5px solid var(--border);cursor:pointer;transition:opacity .1s}
+.list-row:last-child{border-bottom:none}.list-row:active{opacity:.6}
+.list-row .rname{font-size:15px;font-weight:500}
+.list-row .rsub{font-size:12px;color:var(--text2);margin-top:2px;font-family:'DM Mono',monospace}
+.list-row .right{text-align:right;flex-shrink:0;margin-left:10px}
+.badge{display:inline-block;font-size:11px;padding:3px 10px;border-radius:20px;font-weight:600;letter-spacing:0.2px}
+.badge.ok{background:var(--green-bg);color:var(--green)}
+.badge.pend{background:var(--amber-bg);color:var(--amber)}
+.badge.grupo{background:var(--blue-bg);color:var(--blue)}
+.progress-wrap{background:var(--bg3);border-radius:6px;height:6px;overflow:hidden;margin:8px 0 3px}
+.progress-bar{height:100%;border-radius:6px;transition:width .5s ease}
+.progress-bar.ok{background:var(--green)}.progress-bar.pend{background:var(--amber)}
+.abono-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)}
+.abono-row:last-child{border-bottom:none}
+.abono-date{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace}
+.abono-val{font-size:14px;font-weight:600;color:var(--green);font-family:'DM Mono',monospace}
+.grupo-header{display:flex;justify-content:space-between;align-items:center;margin:6px 0 10px}
+.grupo-nombre{font-size:16px;font-weight:600}
+.grupo-total{font-size:12px;color:var(--text2);font-family:'DM Mono',monospace}
+.gpill{display:flex;align-items:center;justify-content:space-between;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:8px}
+.gpill-info{display:flex;align-items:center;gap:10px}
+.gpill-nombre{font-size:14px;font-weight:500}
+.gpill-cnt{color:var(--text3);font-size:12px}
+.gpill-del{background:var(--red-bg);border:0.5px solid var(--red);color:var(--red);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif}
+.back{display:flex;align-items:center;gap:6px;color:var(--text2);font-size:14px;cursor:pointer;padding:0 0 14px;border:none;background:none;font-family:'DM Sans',sans-serif}
+.empty{text-align:center;color:var(--text3);font-size:14px;padding:32px 16px;line-height:1.6}
+.step{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:0.5px solid var(--border);font-size:14px;line-height:1.5}
+.step:last-child{border-bottom:none}
+.step-num{min-width:26px;height:26px;border-radius:50%;background:var(--accent);color:#0a0a0a;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;margin-top:1px}
+.step strong{color:var(--accent)}
+.hbox{background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--green);margin-top:10px;text-align:center;line-height:1.5}
+.sep{height:0.5px;background:var(--border);margin:16px 0}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom));width:100%;max-width:430px}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.modal-btns{display:flex;gap:10px}
+.modal-btns button{flex:1;padding:13px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none}
+.modal-cancel{background:var(--bg3);color:var(--text2)}
+.modal-confirm{background:var(--red);color:#fff}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal" onclick="cerrarModal(event)">
+  <div class="modal">
+    <h3 id="modal-titulo">¿Confirmar?</h3>
+    <p id="modal-texto">Esta acción no se puede deshacer.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="modal-confirm" id="modal-ok">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="topbar"><h1>Préstamos</h1><div class="dot"></div></div>
+  <div class="content">
+
+    <!-- ABONAR -->
+    <div class="screen show" id="sc-abonar">
+      <div class="card">
+        <div class="card-title">Registrar abono</div>
+        <div class="field">
+          <label>Grupo</label>
+          <select id="a-grupo" onchange="actualizarClientesAbono()">
+            <option value="">Todos los clientes</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Cliente</label>
+          <select id="a-cliente"><option value="">Seleccionar cliente...</option></select>
+        </div>
+        <div class="field">
+          <label>Monto del abono</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="a-monto" placeholder="0" inputmode="numeric" oninput="formatearMiles(this)">
+          </div>
+        </div>
+        <button class="btn" onclick="registrarAbono()">Registrar abono</button>
+      </div>
+    </div>
+
+    <!-- CONSULTA -->
+    <div class="screen" id="sc-consulta">
+      <div id="c-lista"></div>
+      <div id="c-detalle" style="display:none"></div>
+    </div>
+
+    <!-- GRUPOS -->
+    <div class="screen" id="sc-grupos">
+      <div class="card">
+        <div class="card-title">Nuevo grupo</div>
+        <div class="field">
+          <label>Nombre del grupo</label>
+          <input type="text" id="g-nombre" placeholder="Ej: Grupo A, Norte, Familia...">
+        </div>
+        <button class="btn" onclick="agregarGrupo()">Crear grupo</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Grupos existentes</div>
+        <div id="gpills"><div class="empty">Aún no hay grupos</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Agregar cliente a un grupo</div>
+        <div class="field">
+          <label>Grupo</label>
+          <select id="gc-grupo"><option value="">Seleccionar grupo...</option></select>
+        </div>
+        <div class="field">
+          <label>Nombre del cliente</label>
+          <input type="text" id="gc-nom" placeholder="Nombre completo">
+        </div>
+        <div class="field">
+          <label>Capital prestado</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="gc-cap" placeholder="0" inputmode="numeric" oninput="formatearMiles(this)">
+          </div>
+        </div>
+        <div class="field">
+          <label>Cuota mensual de interés</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="gc-tasa" placeholder="0" inputmode="numeric" oninput="formatearMiles(this)">
+          </div>
+        </div>
+        <button class="btn" onclick="agregarCliente()">Agregar cliente</button>
+      </div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="screen" id="sc-config">
+      <div class="card">
+        <div class="card-title">Cómo crear el ícono en tu iPhone</div>
+        <div class="step"><div class="step-num">1</div><div>Descarga el archivo <strong>prestamos.html</strong> en tu iPhone</div></div>
+        <div class="step"><div class="step-num">2</div><div>Abre la app <strong>Archivos</strong> y busca el archivo en Descargas</div></div>
+        <div class="step"><div class="step-num">3</div><div>Toca el archivo — se abre en <strong>Safari</strong> automáticamente</div></div>
+        <div class="step"><div class="step-num">4</div><div>En Safari toca el botón <strong>Compartir ⎙</strong> (abajo al centro)</div></div>
+        <div class="step"><div class="step-num">5</div><div>Desliza y elige <strong>"Agregar a pantalla de inicio"</strong></div></div>
+        <div class="step"><div class="step-num">6</div><div>Escribe <strong>"Préstamos"</strong> y toca <strong>Agregar</strong></div></div>
+        <div class="hbox">El ícono queda en tu pantalla como cualquier app y funciona sin internet</div>
+      </div>
+      <div class="card">
+        <div class="card-title">Datos guardados</div>
+        <div id="resumen-cfg" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text2);line-height:2.2">—</div>
+        <div class="sep"></div>
+        <button class="btn sec" onclick="exportar()">Copiar resumen</button>
+        <button class="btn danger" style="margin-top:10px" onclick="pedirBorrarTodo()">Borrar todos los datos</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="nav">
+    <button class="active" onclick="go('abonar')"><span class="icon">＋</span>Abonar</button>
+    <button onclick="go('consulta')"><span class="icon">◎</span>Consulta</button>
+    <button onclick="go('grupos')"><span class="icon">⊞</span>Grupos</button>
+    <button onclick="go('config')"><span class="icon">◈</span>Config</button>
+  </div>
+</div>
+
+<script>
+const KEY='prestamos-v5';
+let D={grupos:[],clientes:[],abonos:[]};
+
+const fmt=n=>'₡'+Math.round(n).toLocaleString('es-CR');
+const hoy=()=>new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'2-digit',year:'numeric'});
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+
+/* ── FORMATO MILES EN INPUT ── */
+function formatearMiles(el){
+  const pos=el.selectionStart;
+  const raw=el.value.replace(/[^\d]/g,'');
+  if(!raw){el.value='';return;}
+  const num=parseInt(raw,10);
+  const formatted=num.toLocaleString('es-CR');
+  el.value=formatted;
+  // ajustar cursor
+  const diff=formatted.length-el.value.length;
+  try{el.setSelectionRange(pos+diff,pos+diff);}catch(e){}
+}
+function leerMiles(id){
+  const raw=document.getElementById(id).value.replace(/[^\d]/g,'');
+  return raw?parseInt(raw,10):0;
+}
+function limpiarMiles(id){document.getElementById(id).value='';}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r)D=JSON.parse(r);}catch(e){}
+  D.grupos=D.grupos||[];D.clientes=D.clientes||[];D.abonos=D.abonos||[];
+  renderAll();
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+function confirmar(titulo,texto,cb){
+  document.getElementById('modal-titulo').textContent=titulo;
+  document.getElementById('modal-texto').textContent=texto;
+  document.getElementById('modal-ok').onclick=()=>{cerrarModal();cb();};
+  document.getElementById('modal').classList.add('show');
+}
+function cerrarModal(e){
+  if(e&&e.target!==document.getElementById('modal'))return;
+  document.getElementById('modal').classList.remove('show');
+}
+
+function go(sc){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sc-'+sc).classList.add('show');
+  const idx={abonar:0,consulta:1,grupos:2,config:3}[sc];
+  document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if(sc==='consulta')renderConsulta();
+  if(sc==='grupos')renderGrupos();
+  if(sc==='abonar')renderAbonar();
+  if(sc==='config')renderConfig();
+  document.querySelector('.content').scrollTop=0;
+}
+
+/* ── ABONAR ── */
+function renderAbonar(){
+  const gs=document.getElementById('a-grupo');
+  gs.innerHTML='<option value="">Todos los clientes</option>';
+  D.grupos.forEach(g=>{
+    const o=document.createElement('option');o.value=g.id;o.textContent=g.nombre;gs.appendChild(o);
+  });
+  actualizarClientesAbono();
+}
+function actualizarClientesAbono(){
+  const gid=document.getElementById('a-grupo').value;
+  const cs=document.getElementById('a-cliente');
+  const lista=gid?D.clientes.filter(c=>c.grupoId===gid):D.clientes;
+  cs.innerHTML='<option value="">Seleccionar cliente...</option>';
+  lista.sort((a,b)=>a.nombre.localeCompare(b.nombre)).forEach(c=>{
+    const o=document.createElement('option');o.value=c.id;o.textContent=c.nombre;cs.appendChild(o);
+  });
+}
+function registrarAbono(){
+  const cid=document.getElementById('a-cliente').value;
+  const monto=leerMiles('a-monto');
+  if(!cid){toast('Selecciona un cliente');return;}
+  if(!monto||monto<=0){toast('Ingresa un monto válido');return;}
+  const c=D.clientes.find(x=>x.id===cid);if(!c)return;
+  D.abonos.push({id:uid(),clienteId:cid,monto,interesGanado:monto,fecha:hoy(),ts:new Date().toISOString()});
+  save();
+  limpiarMiles('a-monto');
+  document.getElementById('a-cliente').value='';
+  toast('Abono registrado ✓');
+}
+
+/* ── GRUPOS ── */
+function renderGrupos(){
+  const el=document.getElementById('gpills');
+  if(!D.grupos.length){
+    el.innerHTML='<div class="empty">Aún no hay grupos.<br>Crea uno arriba.</div>';
+  } else {
+    el.innerHTML=D.grupos.map(g=>{
+      const n=D.clientes.filter(c=>c.grupoId===g.id).length;
+      return `<div class="gpill">
+        <div class="gpill-info">
+          <span class="gpill-nombre">${g.nombre}</span>
+          <span class="gpill-cnt">${n} cliente${n!==1?'s':''}</span>
+        </div>
+        <button class="gpill-del" onclick="pedirEliminarGrupo('${g.id}')">Eliminar</button>
+      </div>`;
+    }).join('');
+  }
+  const sel=document.getElementById('gc-grupo');
+  sel.innerHTML='<option value="">Seleccionar grupo...</option>';
+  D.grupos.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=g.nombre;sel.appendChild(o);});
+}
+function agregarGrupo(){
+  const nom=document.getElementById('g-nombre').value.trim();
+  if(!nom){toast('Escribe el nombre del grupo');return;}
+  if(D.grupos.find(g=>g.nombre.toLowerCase()===nom.toLowerCase())){toast('Ese grupo ya existe');return;}
+  D.grupos.push({id:uid(),nombre:nom});
+  save();
+  document.getElementById('g-nombre').value='';
+  toast('Grupo "'+nom+'" creado ✓');
+  renderGrupos();renderAbonar();
+}
+function pedirEliminarGrupo(id){
+  const g=D.grupos.find(x=>x.id===id);
+  const n=D.clientes.filter(c=>c.grupoId===id).length;
+  confirmar('Eliminar grupo "'+g.nombre+'"','Se eliminarán '+n+' cliente(s) y todos sus abonos. No se puede deshacer.',()=>eliminarGrupo(id));
+}
+function eliminarGrupo(id){
+  const cids=D.clientes.filter(c=>c.grupoId===id).map(c=>c.id);
+  D.grupos=D.grupos.filter(x=>x.id!==id);
+  D.clientes=D.clientes.filter(c=>c.grupoId!==id);
+  D.abonos=D.abonos.filter(a=>!cids.includes(a.clienteId));
+  save();renderGrupos();renderAbonar();toast('Grupo eliminado');
+}
+function agregarCliente(){
+  const gid=document.getElementById('gc-grupo').value;
+  const nom=document.getElementById('gc-nom').value.trim();
+  const cap=leerMiles('gc-cap');
+  const tasa=leerMiles('gc-tasa');
+  if(!gid){toast('Selecciona un grupo');return;}
+  if(!nom){toast('Escribe el nombre del cliente');return;}
+  if(!cap||cap<=0){toast('Ingresa el capital prestado');return;}
+  if(!tasa||tasa<=0){toast('Ingresa la cuota mensual');return;}
+  D.clientes.push({id:uid(),grupoId:gid,nombre:nom,capital:cap,tasa,fecha:hoy()});
+  save();
+  document.getElementById('gc-nom').value='';
+  limpiarMiles('gc-cap');limpiarMiles('gc-tasa');
+  toast(nom+' agregado ✓');
+  renderAbonar();
+}
+
+/* ── CONSULTA ── */
+function renderConsulta(){
+  const lista=document.getElementById('c-lista');
+  const det=document.getElementById('c-detalle');
+  det.style.display='none';lista.style.display='block';
+
+  const calc=c=>{
+    const abs=D.abonos.filter(a=>a.clienteId===c.id);
+    const ti=abs.reduce((s,a)=>s+a.monto,0);
+    return{c,abs,ti,ge:Math.max(0,ti-c.capital),rec:ti>=c.capital};
+  };
+  const todos=D.clientes.map(calc);
+  const totalCap=todos.reduce((s,x)=>s+x.c.capital,0);
+  const totalInt=todos.reduce((s,x)=>s+x.ti,0);
+  const totalGan=todos.reduce((s,x)=>s+x.ge,0);
+
+  let html=`<div class="metrics">
+    <div class="metric"><div class="val">${fmt(totalCap)}</div><div class="lbl">Capital total</div></div>
+    <div class="metric hi"><div class="val">${fmt(totalInt)}</div><div class="lbl">Intereses cobrados</div></div>
+    <div class="metric ac"><div class="val">${fmt(totalGan)}</div><div class="lbl">Ganancia extra</div></div>
+    <div class="metric"><div class="val">${D.clientes.length}</div><div class="lbl">Clientes</div></div>
+  </div>`;
+
+  if(!D.clientes.length){
+    html+='<div class="card"><div class="empty">Ve a Grupos para agregar<br>clientes y empezar</div></div>';
+    lista.innerHTML=html;return;
+  }
+
+  D.grupos.forEach(g=>{
+    const cg=todos.filter(x=>x.c.grupoId===g.id);
+    if(!cg.length)return;
+    const gti=cg.reduce((s,x)=>s+x.ti,0);
+    html+=`<div class="card">
+      <div class="grupo-header">
+        <span class="grupo-nombre">${g.nombre}</span>
+        <span class="grupo-total">${fmt(gti)} · ${cg.length} cliente${cg.length!==1?'s':''}</span>
+      </div>
+      ${cg.sort((a,b)=>a.c.nombre.localeCompare(b.c.nombre)).map(x=>`
+        <div class="list-row" onclick="verDetalle('${x.c.id}')">
+          <div>
+            <div class="rname">${x.c.nombre}</div>
+            <div class="rsub">${fmt(x.ti)} / ${fmt(x.c.capital)}</div>
+          </div>
+          <div class="right">
+            <span class="badge ${x.rec?'ok':'pend'}">${x.rec?'Recuperado':'En proceso'}</span>
+            ${x.ge>0?`<div style="font-size:11px;color:var(--green);margin-top:3px;font-family:'DM Mono',monospace">+${fmt(x.ge)}</div>`:''}
+          </div>
+        </div>`).join('')}
+    </div>`;
+  });
+
+  const sinGrupo=todos.filter(x=>!D.grupos.find(g=>g.id===x.c.grupoId));
+  if(sinGrupo.length){
+    html+=`<div class="card"><div class="grupo-header"><span class="grupo-nombre">Sin grupo</span></div>
+      ${sinGrupo.map(x=>`<div class="list-row" onclick="verDetalle('${x.c.id}')">
+        <div><div class="rname">${x.c.nombre}</div><div class="rsub">${fmt(x.ti)} / ${fmt(x.c.capital)}</div></div>
+        <span class="badge ${x.rec?'ok':'pend'}">${x.rec?'Recuperado':'En proceso'}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+  lista.innerHTML=html;
+}
+
+function verDetalle(cid){
+  const lista=document.getElementById('c-lista');
+  const det=document.getElementById('c-detalle');
+  lista.style.display='none';det.style.display='block';
+  const c=D.clientes.find(x=>x.id===cid);
+  const g=D.grupos.find(x=>x.id===c.grupoId);
+  const abs=D.abonos.filter(a=>a.clienteId===cid).sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+  const ti=abs.reduce((s,a)=>s+a.monto,0);
+  const ge=Math.max(0,ti-c.capital);
+  const pct=Math.min(100,Math.round(ti/c.capital*100));
+  const rec=ti>=c.capital;
+  det.innerHTML=`
+    <button class="back" onclick="renderConsulta()">← Volver</button>
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div style="font-size:19px;font-weight:600">${c.nombre}</div>
+        ${g?`<span class="badge grupo">${g.nombre}</span>`:''}
+      </div>
+      <div class="metrics" style="margin-bottom:12px">
+        <div class="metric"><div class="val">${fmt(c.capital)}</div><div class="lbl">Capital</div></div>
+        <div class="metric hi"><div class="val">${fmt(ti)}</div><div class="lbl">Intereses</div></div>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar ${rec?'ok':'pend'}" style="width:${pct}%"></div></div>
+      <div style="font-size:11px;color:var(--text2);text-align:right;font-family:'DM Mono',monospace">${pct}% del capital cubierto</div>
+      <div style="display:flex;gap:8px;margin-top:12px;font-size:13px;color:var(--text2)">
+        <span>Cuota: ${fmt(c.tasa)}</span><span>·</span><span>Desde: ${c.fecha}</span>
+      </div>
+      ${ge>0?`<div style="margin-top:12px;padding:11px;background:var(--green-bg);border:0.5px solid var(--green);border-radius:var(--radius-sm);font-size:13px;color:var(--green);text-align:center;font-family:'DM Mono',monospace">Ganancia extra: ${fmt(ge)}</div>`:''}
+    </div>
+    <div class="card">
+      <div class="card-title">Abonos registrados (${abs.length})</div>
+      ${abs.length?abs.map(a=>`<div class="abono-row">
+        <div class="abono-date">${a.fecha}</div>
+        <div class="abono-val">${fmt(a.monto)}</div>
+      </div>`).join(''):'<div class="empty">Sin abonos aún</div>'}
+    </div>
+    <button class="btn danger" onclick="pedirEliminarCliente('${cid}')">Eliminar cliente</button>
+    <div style="height:16px"></div>`;
+  document.querySelector('.content').scrollTop=0;
+}
+
+function pedirEliminarCliente(id){
+  const c=D.clientes.find(x=>x.id===id);
+  confirmar('Eliminar a "'+c.nombre+'"','Se borrarán todos sus abonos. No se puede deshacer.',()=>eliminarCliente(id));
+}
+function eliminarCliente(id){
+  D.clientes=D.clientes.filter(x=>x.id!==id);
+  D.abonos=D.abonos.filter(a=>a.clienteId!==id);
+  save();toast('Cliente eliminado');renderConsulta();
+}
+
+/* ── CONFIG ── */
+function renderConfig(){
+  document.getElementById('resumen-cfg').innerHTML=
+    `Grupos: ${D.grupos.length}<br>Clientes: ${D.clientes.length}<br>Abonos: ${D.abonos.length}`;
+}
+function exportar(){
+  let txt='RESUMEN DE PRÉSTAMOS\n'+'─'.repeat(32)+'\n\n';
+  D.grupos.forEach(g=>{
+    const cg=D.clientes.filter(c=>c.grupoId===g.id);
+    txt+=`▸ ${g.nombre} (${cg.length} clientes)\n`;
+    cg.forEach(c=>{
+      const ti=D.abonos.filter(a=>a.clienteId===c.id).reduce((s,a)=>s+a.monto,0);
+      txt+=`  ${c.nombre}: ${fmt(c.capital)} → ${fmt(ti)} (${ti>=c.capital?'RECUPERADO':'en proceso'})\n`;
+    });
+    txt+='\n';
+  });
+  try{navigator.clipboard.writeText(txt).then(()=>toast('Resumen copiado ✓'));}
+  catch(e){
+    const el=document.createElement('textarea');el.value=txt;document.body.appendChild(el);el.select();
+    document.execCommand('copy');document.body.removeChild(el);toast('Resumen copiado ✓');
+  }
+}
+function pedirBorrarTodo(){
+  confirmar('Borrar todos los datos','Se eliminarán grupos, clientes y abonos. No se puede deshacer.',()=>{
+    D={grupos:[],clientes:[],abonos:[]};save();renderAll();go('abonar');toast('Datos borrados');
+  });
+}
+
+function renderAll(){renderAbonar();renderGrupos();}
+load();
+</script>
+</body>
+</html>
