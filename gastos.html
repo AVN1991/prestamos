@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mis Finanzas">
+<meta name="theme-color" content="#0f0f0f">
+<title>Control de Gastos</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0f0f0f;--bg2:#1a1a1a;--bg3:#242424;--border:#2e2e2e;
+  --text:#f0f0f0;--text2:#888;--text3:#555;
+  --green:#22c55e;--green-bg:#0d2e1c;--green-border:#15502e;
+  --red:#ef4444;--red-bg:#2a0f0f;--red-border:#5a1a1a;
+  --amber:#f59e0b;--amber-bg:#2a1f08;
+  --blue:#60a5fa;--blue-bg:#0f1e2e;
+  --accent:#e8ff47;--accent-dark:#b8cc1a;
+  --radius:14px;--radius-sm:9px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none}
+.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom)}
+.topbar{padding:52px 20px 12px;display:flex;align-items:flex-end;justify-content:space-between}
+.topbar h1{font-size:26px;font-weight:600;letter-spacing:-0.5px}
+.topbar .dot{width:10px;height:10px;border-radius:50%;background:var(--accent);margin-bottom:5px}
+.content{flex:1;overflow-y:auto;padding:0 16px;-webkit-overflow-scrolling:touch}
+.nav{display:flex;padding:12px 16px;padding-bottom:calc(12px + env(safe-area-inset-bottom));background:var(--bg);border-top:0.5px solid var(--border);position:sticky;bottom:0}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;border:none;background:transparent;color:var(--text3);font-family:'DM Sans',sans-serif;font-size:10px;font-weight:500;cursor:pointer;padding:6px 4px;border-radius:10px;transition:all .15s;letter-spacing:0.3px;text-transform:uppercase}
+.nav button .icon{font-size:20px;line-height:1}
+.nav button.active{color:var(--accent)}
+.screen{display:none;animation:fadeIn .2s ease}.screen.show{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:500;color:var(--text2);margin-bottom:14px;text-transform:uppercase;letter-spacing:0.8px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:6px;font-weight:500;letter-spacing:0.3px}
+.field input,.field select,.field textarea{width:100%;padding:13px 14px;background:var(--bg3);border:0.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'DM Sans',sans-serif;font-size:16px;-webkit-appearance:none;appearance:none;transition:border-color .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--accent)}
+.field input::placeholder,.field textarea::placeholder{color:var(--text3)}
+.field select option{background:var(--bg3)}
+.monto-wrap{position:relative}
+.monto-prefix{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:16px;color:var(--text2);pointer-events:none}
+.monto-wrap input{padding-left:28px !important}
+/* tipo toggle */
+.tipo-toggle{display:flex;gap:8px;margin-bottom:14px}
+.tipo-btn{flex:1;padding:12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:500;cursor:pointer;transition:all .15s;text-align:center}
+.tipo-btn.entrada.active{background:var(--green-bg);border-color:var(--green);color:var(--green)}
+.tipo-btn.salida.active{background:var(--red-bg);border-color:var(--red);color:var(--red)}
+.btn{width:100%;padding:15px;background:var(--accent);color:#0a0a0a;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:16px;font-weight:600;cursor:pointer;margin-top:6px;transition:all .15s}
+.btn:active{transform:scale(0.98);background:var(--accent-dark)}
+.btn.sec{background:transparent;color:var(--text2);border:0.5px solid var(--border)}
+.btn.danger{background:var(--red-bg);color:var(--red);border:0.5px solid var(--red)}
+.toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--accent);color:#0a0a0a;padding:10px 22px;border-radius:30px;font-size:13px;font-weight:600;opacity:0;transition:all .3s;z-index:999;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* métricas */
+.saldo-grande{text-align:center;padding:20px 0 16px}
+.saldo-grande .lbl{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+.saldo-grande .val{font-size:38px;font-weight:600;font-family:'DM Mono',monospace;letter-spacing:-1px}
+.saldo-grande .val.pos{color:var(--green)}
+.saldo-grande .val.neg{color:var(--red)}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:14px}
+.metric .val{font-size:17px;font-weight:600;font-family:'DM Mono',monospace}
+.metric .lbl{font-size:11px;color:var(--text2);margin-top:3px;text-transform:uppercase;letter-spacing:0.5px}
+.metric.entrada .val{color:var(--green)}
+.metric.salida .val{color:var(--red)}
+/* filtro mes */
+.mes-nav{display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:10px 14px;margin-bottom:12px}
+.mes-nav button{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:0 8px;line-height:1}
+.mes-nav .mes-label{font-size:15px;font-weight:500;text-transform:capitalize}
+/* lista movimientos */
+.mov-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:0.5px solid var(--border)}
+.mov-row:last-child{border-bottom:none}
+.mov-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;margin-right:10px}
+.mov-icon.entrada{background:var(--green-bg)}
+.mov-icon.salida{background:var(--red-bg)}
+.mov-left{display:flex;align-items:center;flex:1;min-width:0}
+.mov-desc{font-size:14px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mov-meta{font-size:11px;color:var(--text2);margin-top:2px}
+.mov-amount{font-size:15px;font-weight:600;font-family:'DM Mono',monospace;flex-shrink:0;margin-left:8px}
+.mov-amount.entrada{color:var(--green)}
+.mov-amount.salida{color:var(--red)}
+/* categorías */
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.cat-card{background:var(--bg2);border:0.5px solid var(--border);border-radius:var(--radius-sm);padding:12px}
+.cat-card .cat-nombre{font-size:13px;font-weight:500;margin-bottom:4px}
+.cat-card .cat-val{font-size:16px;font-weight:600;font-family:'DM Mono',monospace;color:var(--red)}
+.cat-card .cat-pct{font-size:11px;color:var(--text3);margin-top:2px}
+.progress-wrap{background:var(--bg3);border-radius:4px;height:4px;overflow:hidden;margin-top:6px}
+.progress-bar{height:100%;border-radius:4px;background:var(--red)}
+/* filtros */
+.filtros{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:4px}
+.filtros::-webkit-scrollbar{display:none}
+.filtro-btn{flex-shrink:0;padding:6px 14px;border-radius:20px;border:0.5px solid var(--border);background:transparent;color:var(--text2);font-family:'DM Sans',sans-serif;font-size:13px;cursor:pointer;white-space:nowrap;transition:all .15s}
+.filtro-btn.active{background:var(--accent);color:#0a0a0a;border-color:var(--accent);font-weight:600}
+.empty{text-align:center;color:var(--text3);font-size:14px;padding:32px 16px;line-height:1.6}
+.sep{height:0.5px;background:var(--border);margin:16px 0}
+.back{display:flex;align-items:center;gap:6px;color:var(--text2);font-size:14px;cursor:pointer;padding:0 0 14px;border:none;background:none;font-family:'DM Sans',sans-serif}
+/* modal */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:0.5px solid var(--border);border-radius:20px 20px 0 0;padding:24px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom));width:100%;max-width:430px}
+.modal h3{font-size:17px;font-weight:600;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--text2);margin-bottom:20px;line-height:1.5}
+.modal-btns{display:flex;gap:10px}
+.modal-btns button{flex:1;padding:13px;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:15px;font-weight:600;cursor:pointer;border:none}
+.modal-cancel{background:var(--bg3);color:var(--text2)}
+.modal-confirm{background:var(--red);color:#fff}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;font-weight:600}
+.badge.entrada{background:var(--green-bg);color:var(--green)}
+.badge.salida{background:var(--red-bg);color:var(--red)}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal" onclick="cerrarModal(event)">
+  <div class="modal">
+    <h3 id="modal-titulo">¿Confirmar?</h3>
+    <p id="modal-texto">Esta acción no se puede deshacer.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="modal-confirm" id="modal-ok">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="topbar"><h1>Mis Finanzas</h1><div class="dot"></div></div>
+  <div class="content">
+
+    <!-- REGISTRAR -->
+    <div class="screen show" id="sc-registrar">
+      <div class="card">
+        <div class="card-title">Nuevo movimiento</div>
+        <div class="tipo-toggle">
+          <button class="tipo-btn entrada active" id="btn-entrada" onclick="setTipo('entrada')">▲ Entrada</button>
+          <button class="tipo-btn salida" id="btn-salida" onclick="setTipo('salida')">▼ Salida</button>
+        </div>
+        <div class="field">
+          <label>Descripción</label>
+          <input type="text" id="r-desc" placeholder="Ej: Pago agua, Salario, Supermercado...">
+        </div>
+        <div class="field">
+          <label>Monto</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="r-monto" placeholder="0" inputmode="numeric" oninput="formatearMiles(this)">
+          </div>
+        </div>
+        <div class="field">
+          <label>Categoría</label>
+          <select id="r-cat">
+            <option value="">Sin categoría</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Fuente</label>
+          <select id="r-fuente">
+            <option value="general">General</option>
+            <option value="salario">Salario</option>
+            <option value="emprendimiento">Emprendimiento</option>
+          </select>
+        </div>
+        <button class="btn" onclick="registrar()">Guardar movimiento</button>
+      </div>
+    </div>
+
+    <!-- RESUMEN -->
+    <div class="screen" id="sc-resumen">
+      <div id="resumen-content"></div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="screen" id="sc-historial">
+      <div id="historial-content"></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="screen" id="sc-config">
+      <div class="card">
+        <div class="card-title">Categorías de gastos</div>
+        <div id="lista-cats"></div>
+        <div class="sep"></div>
+        <div class="field">
+          <label>Nueva categoría</label>
+          <input type="text" id="nueva-cat" placeholder="Ej: Tarjeta, Agua, Gasolina...">
+        </div>
+        <button class="btn" onclick="agregarCat()">Agregar categoría</button>
+      </div>
+      <div class="card">
+        <div class="card-title">Datos</div>
+        <div id="cfg-resumen" style="font-family:'DM Mono',monospace;font-size:13px;color:var(--text2);line-height:2.2">—</div>
+        <div class="sep"></div>
+        <button class="btn danger" onclick="pedirBorrar()">Borrar todos los datos</button>
+      </div>
+    </div>
+
+  </div>
+  <div class="nav">
+    <button class="active" onclick="go('registrar')"><span class="icon">＋</span>Registrar</button>
+    <button onclick="go('resumen')"><span class="icon">◎</span>Resumen</button>
+    <button onclick="go('historial')"><span class="icon">☰</span>Historial</button>
+    <button onclick="go('config')"><span class="icon">◈</span>Config</button>
+  </div>
+</div>
+
+<script>
+const KEY='finanzas-v1';
+let D={movimientos:[],categorias:[]};
+let tipoActual='entrada';
+let mesActual=new Date().getMonth();
+let anioActual=new Date().getFullYear();
+let filtroHistorial='todo';
+
+const fmt=n=>'₡'+Math.round(n).toLocaleString('es-CR');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const hoy=()=>new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'2-digit',year:'numeric'});
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+
+const CATS_DEFAULT=['Alimentación','Transporte','Agua','Luz','Internet','Tarjeta de crédito','Salud','Ropa','Entretenimiento','Otros'];
+
+function formatearMiles(el){
+  const raw=el.value.replace(/[^\d]/g,'');
+  if(!raw){el.value='';return;}
+  el.value=parseInt(raw,10).toLocaleString('es-CR');
+}
+function leerMiles(id){
+  const raw=document.getElementById(id).value.replace(/[^\d]/g,'');
+  return raw?parseInt(raw,10):0;
+}
+
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r)D=JSON.parse(r);}catch(e){}
+  D.movimientos=D.movimientos||[];
+  D.categorias=D.categorias||[...CATS_DEFAULT];
+  renderCatSelect();renderListaCats();
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+function confirmar(titulo,texto,cb){
+  document.getElementById('modal-titulo').textContent=titulo;
+  document.getElementById('modal-texto').textContent=texto;
+  document.getElementById('modal-ok').onclick=()=>{cerrarModal();cb();};
+  document.getElementById('modal').classList.add('show');
+}
+function cerrarModal(e){
+  if(e&&e.target!==document.getElementById('modal'))return;
+  document.getElementById('modal').classList.remove('show');
+}
+
+function go(sc){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sc-'+sc).classList.add('show');
+  const idx={registrar:0,resumen:1,historial:2,config:3}[sc];
+  document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if(sc==='resumen')renderResumen();
+  if(sc==='historial')renderHistorial();
+  if(sc==='config')renderConfig();
+  document.querySelector('.content').scrollTop=0;
+}
+
+function setTipo(t){
+  tipoActual=t;
+  document.getElementById('btn-entrada').classList.toggle('active',t==='entrada');
+  document.getElementById('btn-salida').classList.toggle('active',t==='salida');
+}
+
+function renderCatSelect(){
+  const sel=document.getElementById('r-cat');
+  sel.innerHTML='<option value="">Sin categoría</option>';
+  D.categorias.forEach(c=>{
+    const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);
+  });
+}
+
+function registrar(){
+  const desc=document.getElementById('r-desc').value.trim();
+  const monto=leerMiles('r-monto');
+  const cat=document.getElementById('r-cat').value;
+  const fuente=document.getElementById('r-fuente').value;
+  if(!desc){toast('Escribe una descripción');return;}
+  if(!monto||monto<=0){toast('Ingresa un monto válido');return;}
+  D.movimientos.push({
+    id:uid(),tipo:tipoActual,desc,monto,cat,fuente,
+    fecha:hoy(),ts:new Date().toISOString(),
+    mes:new Date().getMonth(),anio:new Date().getFullYear()
+  });
+  save();
+  document.getElementById('r-desc').value='';
+  document.getElementById('r-monto').value='';
+  toast((tipoActual==='entrada'?'Entrada':'Salida')+' registrada ✓');
+}
+
+/* ── RESUMEN ── */
+function renderResumen(){
+  const el=document.getElementById('resumen-content');
+  const movMes=D.movimientos.filter(m=>m.mes===mesActual&&m.anio===anioActual);
+  const entradas=movMes.filter(m=>m.tipo==='entrada').reduce((s,m)=>s+m.monto,0);
+  const salidas=movMes.filter(m=>m.tipo==='salida').reduce((s,m)=>s+m.monto,0);
+  const saldo=entradas-salidas;
+
+  // Gastos por categoría
+  const porCat={};
+  movMes.filter(m=>m.tipo==='salida').forEach(m=>{
+    const c=m.cat||'Sin categoría';
+    porCat[c]=(porCat[c]||0)+m.monto;
+  });
+  const catOrdenadas=Object.entries(porCat).sort((a,b)=>b[1]-a[1]);
+  const maxCat=catOrdenadas[0]?catOrdenadas[0][1]:1;
+
+  // Entradas por fuente
+  const entradasPorFuente={salario:0,emprendimiento:0,general:0};
+  movMes.filter(m=>m.tipo==='entrada').forEach(m=>entradasPorFuente[m.fuente||'general']+=m.monto);
+
+  el.innerHTML=`
+    <div class="mes-nav">
+      <button onclick="cambiarMes(-1)">&#8249;</button>
+      <span class="mes-label">${MESES[mesActual]} ${anioActual}</span>
+      <button onclick="cambiarMes(1)">&#8250;</button>
+    </div>
+
+    <div class="saldo-grande">
+      <div class="lbl">Saldo del mes</div>
+      <div class="val ${saldo>=0?'pos':'neg'}">${fmt(Math.abs(saldo))}</div>
+      <div style="font-size:12px;color:var(--text2);margin-top:4px">${saldo>=0?'Positivo &mdash; gast&aacute;s menos de lo que entr&aacute;s':'Negativo &mdash; gast&aacute;s m&aacute;s de lo que entr&aacute;s'}</div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric entrada"><div class="val">${fmt(entradas)}</div><div class="lbl">Total entradas</div></div>
+      <div class="metric salida"><div class="val">${fmt(salidas)}</div><div class="lbl">Total salidas</div></div>
+    </div>
+
+    ${entradas>0?`
+    <div class="card">
+      <div class="card-title">Entradas por fuente</div>
+      ${[['salario','Salario'],['emprendimiento','Emprendimiento'],['general','General']].filter(([k])=>entradasPorFuente[k]>0).map(([k,lbl])=>`
+        <div class="mov-row">
+          <div>
+            <div style="font-size:14px;font-weight:500">${lbl}</div>
+            <div style="font-size:11px;color:var(--text2)">${entradas>0?Math.round(entradasPorFuente[k]/entradas*100):0}% del total</div>
+          </div>
+          <span style="font-size:15px;font-weight:600;color:var(--green);font-family:'DM Mono',monospace">+${fmt(entradasPorFuente[k])}</span>
+        </div>
+      `).join('')}
+    </div>`:''}
+
+    ${catOrdenadas.length?`
+    <div class="card">
+      <div class="card-title">Gastos por categor&iacute;a</div>
+      <div class="cat-grid">
+        ${catOrdenadas.map(([cat,total])=>`
+          <div class="cat-card">
+            <div class="cat-nombre">${cat}</div>
+            <div class="cat-val">${fmt(total)}</div>
+            <div class="cat-pct">${salidas>0?Math.round(total/salidas*100):0}% del total</div>
+            <div class="progress-wrap"><div class="progress-bar" style="width:${Math.round(total/maxCat*100)}%"></div></div>
+          </div>
+        `).join('')}
+      </div>
+    </div>`:''}
+
+    ${movMes.length===0?'<div class="card"><div class="empty">Sin movimientos este mes.<br>Registr&aacute; entradas y salidas en la pesta&ntilde;a +</div></div>':''}
+  `;
+}
+
+function cambiarMes(dir){
+  mesActual+=dir;
+  if(mesActual<0){mesActual=11;anioActual--;}
+  if(mesActual>11){mesActual=0;anioActual++;}
+  renderResumen();
+}
+
+/* ── HISTORIAL ── */
+function renderHistorial(){
+  const el=document.getElementById('historial-content');
+  let movs=[...D.movimientos].sort((a,b)=>new Date(b.ts)-new Date(a.ts));
+
+  if(filtroHistorial==='entrada')movs=movs.filter(m=>m.tipo==='entrada');
+  if(filtroHistorial==='salida')movs=movs.filter(m=>m.tipo==='salida');
+  if(filtroHistorial==='salario')movs=movs.filter(m=>m.fuente==='salario'&&m.tipo==='entrada');
+  if(filtroHistorial==='emprendimiento')movs=movs.filter(m=>m.fuente==='emprendimiento'&&m.tipo==='entrada');
+  if(!['todo','entrada','salida','salario','emprendimiento'].includes(filtroHistorial)){
+    movs=movs.filter(m=>m.cat===filtroHistorial);
+  }
+
+  const cats=D.categorias.filter(c=>D.movimientos.some(m=>m.cat===c));
+
+  el.innerHTML=`
+    <div class="mes-nav">
+      <button onclick="cambiarMesH(-1)">‹</button>
+      <span class="mes-label">${MESES[mesActual]} ${anioActual}</span>
+      <button onclick="cambiarMesH(1)">›</button>
+    </div>
+    <div class="filtros">
+      <button class="filtro-btn ${filtroHistorial==='todo'?'active':''}" onclick="setFiltro('todo')">Todos</button>
+      <button class="filtro-btn ${filtroHistorial==='entrada'?'active':''}" onclick="setFiltro('entrada')">Entradas</button>
+      <button class="filtro-btn ${filtroHistorial==='salida'?'active':''}" onclick="setFiltro('salida')">Salidas</button>
+      <button class="filtro-btn ${filtroHistorial==='salario'?'active':''}" onclick="setFiltro('salario')">Salario</button>
+      <button class="filtro-btn ${filtroHistorial==='emprendimiento'?'active':''}" onclick="setFiltro('emprendimiento')">Emprendimiento</button>
+      ${cats.map(c=>`<button class="filtro-btn ${filtroHistorial===c?'active':''}" onclick="setFiltro('${c}')">${c}</button>`).join('')}
+    </div>
+    <div class="card">
+      ${movs.filter(m=>m.mes===mesActual&&m.anio===anioActual).length?
+        movs.filter(m=>m.mes===mesActual&&m.anio===anioActual).map(m=>`
+          <div class="mov-row">
+            <div class="mov-left">
+              <div class="mov-icon ${m.tipo}">${m.tipo==='entrada'?'▲':'▼'}</div>
+              <div style="min-width:0">
+                <div class="mov-desc">${m.desc}</div>
+                <div class="mov-meta">${m.fecha}${m.cat?' · '+m.cat:''}${m.fuente&&m.fuente!=='general'?' · '+m.fuente:''}</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;flex-shrink:0">
+              <span class="mov-amount ${m.tipo}">${m.tipo==='entrada'?'+':'-'}${fmt(m.monto)}</span>
+              <button onclick="pedirEliminarMov('${m.id}')" style="background:none;border:none;color:var(--text3);font-size:16px;cursor:pointer;padding:4px">×</button>
+            </div>
+          </div>
+        `).join('')
+        :'<div class="empty">Sin movimientos este mes</div>'}
+    </div>`;
+}
+
+function cambiarMesH(dir){
+  mesActual+=dir;
+  if(mesActual<0){mesActual=11;anioActual--;}
+  if(mesActual>11){mesActual=0;anioActual++;}
+  renderHistorial();
+}
+
+function setFiltro(f){
+  filtroHistorial=f;renderHistorial();
+}
+
+function pedirEliminarMov(id){
+  confirmar('Eliminar movimiento','¿Seguro que querés borrar este registro?',()=>{
+    D.movimientos=D.movimientos.filter(m=>m.id!==id);
+    save();toast('Eliminado');renderHistorial();
+  });
+}
+
+/* ── CONFIG ── */
+function renderListaCats(){
+  const el=document.getElementById('lista-cats');
+  if(!el)return;
+  el.innerHTML=D.categorias.map(c=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:0.5px solid var(--border)">
+      <span style="font-size:14px">${c}</span>
+      <button onclick="eliminarCat('${c}')" style="background:var(--red-bg);border:0.5px solid var(--red);color:var(--red);border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;font-family:'DM Sans',sans-serif">Quitar</button>
+    </div>
+  `).join('');
+}
+function agregarCat(){
+  const nom=document.getElementById('nueva-cat').value.trim();
+  if(!nom){toast('Escribe el nombre');return;}
+  if(D.categorias.includes(nom)){toast('Esa categoría ya existe');return;}
+  D.categorias.push(nom);save();
+  document.getElementById('nueva-cat').value='';
+  renderListaCats();renderCatSelect();
+  toast('Categoría agregada ✓');
+}
+function eliminarCat(c){
+  D.categorias=D.categorias.filter(x=>x!==c);save();
+  renderListaCats();renderCatSelect();toast('Categoría eliminada');
+}
+function renderConfig(){
+  renderListaCats();
+  document.getElementById('cfg-resumen').innerHTML=
+    `Movimientos: ${D.movimientos.length}<br>Categorías: ${D.categorias.length}`;
+}
+function pedirBorrar(){
+  confirmar('Borrar todos los datos','Se eliminarán todos los movimientos y categorías personalizadas.',()=>{
+    D={movimientos:[],categorias:[...CATS_DEFAULT]};save();
+    renderCatSelect();renderListaCats();go('registrar');toast('Datos borrados');
+  });
+}
+
+load();
+</script>
+</body>
+</html>
