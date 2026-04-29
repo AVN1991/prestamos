@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Íconos de App</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@500;700;800&display=swap" rel="stylesheet"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  body{background:#08080f;font-family:'DM Sans',sans-serif;color:#e4e2f4;min-height:100vh;padding:28px 16px 60px;display:flex;flex-direction:column;align-items:center}
+  h1{font-family:'Syne',sans-serif;font-size:22px;font-weight:800;margin-bottom:4px;text-align:center}
+  .sub{font-size:12px;color:#2a2a48;margin-bottom:28px;text-align:center;line-height:1.5}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:400px}
+  .card{background:#0f0f1b;border:1px solid #1a1a2c;border-radius:18px;padding:16px 12px 14px;display:flex;flex-direction:column;align-items:center;gap:10px}
+  canvas{border-radius:26px;display:block;width:130px;height:130px}
+  .name{font-size:11px;font-weight:700;text-align:center;letter-spacing:.04em}
+  .dl{width:100%;padding:11px 0;border:none;border-radius:11px;font-family:'DM Sans',sans-serif;font-size:13px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s}
+  .dl:active{opacity:.7}
+  .tip{margin-top:30px;background:#0f0f1b;border:1px solid #1a1a2c;border-radius:16px;padding:16px;max-width:400px;width:100%}
+  .tip-title{font-size:12px;font-weight:700;color:#3a3a62;margin-bottom:8px;text-transform:uppercase;letter-spacing:.06em}
+  .tip-text{font-size:12px;color:#2a2a44;line-height:1.6}
+  .tip-text strong{color:#3a3a62}
+</style>
+</head>
+<body>
+<h1>Íconos de App 🎨</h1>
+<p class="sub">Tocá <strong style="color:#3a3a62">⬇ Descargar</strong> en cada ícono<br/>luego guardá la imagen y asignala en Atajos</p>
+
+<div class="grid">
+  <div class="card">
+    <canvas id="c1" width="512" height="512"></canvas>
+    <span class="name" style="color:#5ef09a">Control de Pagos</span>
+    <button class="dl" style="background:#14c058;color:#000" onclick="dl('c1','icono-control-pagos')">⬇ Descargar</button>
+  </div>
+  <div class="card">
+    <canvas id="c2" width="512" height="512"></canvas>
+    <span class="name" style="color:#fbbf24">Pagos</span>
+    <button class="dl" style="background:#f59e0b;color:#000" onclick="dl('c2','icono-pagos')">⬇ Descargar</button>
+  </div>
+  <div class="card">
+    <canvas id="c3" width="512" height="512"></canvas>
+    <span class="name" style="color:#a78bfa">Finanzas</span>
+    <button class="dl" style="background:#7c6ff7;color:#fff" onclick="dl('c3','icono-finanzas')">⬇ Descargar</button>
+  </div>
+  <div class="card">
+    <canvas id="c4" width="512" height="512"></canvas>
+    <span class="name" style="color:#fb7185">Mis Finanzas</span>
+    <button class="dl" style="background:#f43f6a;color:#fff" onclick="dl('c4','icono-mis-finanzas')">⬇ Descargar</button>
+  </div>
+  <div class="card" style="grid-column:1/-1;max-width:200px;margin:0 auto">
+    <canvas id="c5" width="512" height="512"></canvas>
+    <span class="name" style="color:#38bdf8">Préstamos</span>
+    <button class="dl" style="background:#0ea5e9;color:#fff" onclick="dl('c5','icono-prestamos')">⬇ Descargar</button>
+  </div>
+</div>
+
+<div class="tip">
+  <div class="tip-title">📱 Cómo usarlos en iPhone</div>
+  <div class="tip-text">
+    1. Tocá <strong>⬇ Descargar</strong> → se abre la imagen<br/>
+    2. Mantené presionada la imagen → <strong>Guardar en Fotos</strong><br/>
+    3. Abrí <strong>Atajos</strong> → Nuevo atajo → Agregar acción<br/>
+    4. Buscá <strong>"Abrir URL"</strong> → pegá el link de tu app<br/>
+    5. Tocá <strong>···</strong> → Agregar a pantalla de inicio<br/>
+    6. Tocá el ícono cuadrado → elige la foto guardada ✓
+  </div>
+</div>
+
+<script>
+// ── Shared utils ─────────────────────────────────────────────────
+function rr(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.lineTo(x+w-r,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+function clip(ctx){rr(ctx,0,0,512,512,112);ctx.clip();}
+function glow(ctx,cx,cy,color,opacity){
+  const g=ctx.createRadialGradient(cx,cy,0,cx,cy,230);
+  g.addColorStop(0,color.replace(')',`,${opacity})`).replace('rgb','rgba'));
+  g.addColorStop(1,color.replace(')',',0)').replace('rgb','rgba'));
+  ctx.fillStyle=g;ctx.fillRect(0,0,512,512);
+}
+function label(ctx,text,color){
+  ctx.fillStyle='rgba(0,0,0,0.88)';ctx.fillRect(0,390,512,122);
+  ctx.fillStyle=color;ctx.font='bold 48px "DM Sans",sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,256,456);
+}
+
+function dl(id,name){
+  const c=document.getElementById(id);
+  const a=document.createElement('a');
+  a.download=name+'.png';
+  a.href=c.toDataURL('image/png');
+  a.click();
+}
+
+// ── ICON 1 — CONTROL DE PAGOS (Verde azulado + calendario) ───────
+function drawControl(){
+  const c=document.getElementById('c1'),ctx=c.getContext('2d'),S=512;
+  ctx.save();clip(ctx);
+  // BG
+  const bg=ctx.createLinearGradient(0,0,S,S);
+  bg.addColorStop(0,'#062a20');bg.addColorStop(1,'#030f0a');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,S,S);
+  // Glow
+  const gl=ctx.createRadialGradient(256,220,0,256,220,240);
+  gl.addColorStop(0,'rgba(20,192,88,0.3)');gl.addColorStop(1,'rgba(20,192,88,0)');
+  ctx.fillStyle=gl;ctx.fillRect(0,0,S,S);
+  // Calendar outer
+  ctx.strokeStyle='#14c058';ctx.lineWidth=4;
+  rr(ctx,56,60,400,300,28);ctx.stroke();
+  // Header
+  const hg=ctx.createLinearGradient(56,60,456,60);
+  hg.addColorStop(0,'#14c058');hg.addColorStop(1,'#5ef09a');
+  ctx.fillStyle=hg;rr(ctx,56,60,400,82,28);ctx.fill();
+  ctx.fillRect(56,118,400,24);
+  // Bolts
+  ctx.fillStyle='#5ef09a';
+  rr(ctx,148,42,22,52,11);ctx.fill();
+  rr(ctx,342,42,22,52,11);ctx.fill();
+  // Month
+  ctx.font='bold 36px "DM Sans",sans-serif';ctx.fillStyle='#000';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('ABRIL 2026',256,102);
+  // Grid cells
+  const cells=[
+    {x:72,y:170,s:'done',c:'#14c058'},{x:172,y:170,s:'done',c:'#14c058'},
+    {x:272,y:170,s:'done',c:'#5ef09a'},{x:372,y:170,s:'empty'},{x:452,y:170,s:'empty'},
+    {x:72,y:248,s:'done',c:'#14c058'},{x:172,y:248,s:'done',c:'#f59e0b'},
+    {x:272,y:248,s:'empty'},{x:372,y:248,s:'empty'},{x:452,y:248,s:'empty'},
+    {x:72,y:320,s:'done',c:'#14c058'},{x:172,y:320,s:'empty'},{x:272,y:320,s:'empty'},
+  ];
+  cells.forEach(cell=>{
+    if(cell.s==='done'){
+      ctx.fillStyle=cell.c;rr(ctx,cell.x,cell.y,68,58,12);ctx.fill();
+      ctx.font='bold 32px sans-serif';ctx.fillStyle='#000';
+      ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✓',cell.x+34,cell.y+30);
+    } else {
+      ctx.strokeStyle='#14c058';ctx.lineWidth=2;ctx.fillStyle='rgba(20,192,88,0.06)';
+      rr(ctx,cell.x,cell.y,68,58,12);ctx.fill();ctx.stroke();
+    }
+  });
+  // Progress bar
+  ctx.fillStyle='#0a2a1a';rr(ctx,72,346,300,16,8);ctx.fill();
+  const pg=ctx.createLinearGradient(72,0,372,0);
+  pg.addColorStop(0,'#14c058');pg.addColorStop(1,'#5ef09a');
+  ctx.fillStyle=pg;rr(ctx,72,346,185,16,8);ctx.fill();
+  // ₡ badge
+  const cg=ctx.createLinearGradient(380,300,460,380);
+  cg.addColorStop(0,'#fde68a');cg.addColorStop(1,'#f59e0b');
+  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(430,352,40,0,Math.PI*2);ctx.fill();
+  ctx.font='bold 44px "DM Sans",sans-serif';ctx.fillStyle='#062a20';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('₡',430,356);
+  label(ctx,'CTRL. PAGOS','#5ef09a');
+  ctx.restore();
+}
+
+// ── ICON 2 — PAGOS (Dorado + moneda 3D) ──────────────────────────
+function drawPagos(){
+  const c=document.getElementById('c2'),ctx=c.getContext('2d'),S=512;
+  ctx.save();clip(ctx);
+  const bg=ctx.createLinearGradient(0,0,S,S);
+  bg.addColorStop(0,'#1a1000');bg.addColorStop(1,'#0a0800');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,S,S);
+  // Glow
+  const gl=ctx.createRadialGradient(256,210,0,256,210,230);
+  gl.addColorStop(0,'rgba(251,191,36,0.32)');gl.addColorStop(1,'rgba(251,191,36,0)');
+  ctx.fillStyle=gl;ctx.fillRect(0,0,S,S);
+  // Outer glow ring
+  ctx.strokeStyle='rgba(251,191,36,0.15)';ctx.lineWidth=2;
+  ctx.beginPath();ctx.arc(256,210,170,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(256,210,140,0,Math.PI*2);ctx.stroke();
+  // Coin shadow
+  ctx.fillStyle='rgba(0,0,0,0.4)';ctx.beginPath();ctx.ellipse(266,330,100,18,0,0,Math.PI*2);ctx.fill();
+  // Coin side (3D effect)
+  const side=ctx.createLinearGradient(0,0,0,S);
+  side.addColorStop(0,'#92400e');side.addColorStop(1,'#78350f');
+  ctx.fillStyle=side;ctx.beginPath();ctx.ellipse(256,230,128,22,0,0,Math.PI);ctx.fill();
+  ctx.beginPath();ctx.moveTo(128,210);ctx.lineTo(128,230);
+  ctx.ellipse(256,230,128,22,0,Math.PI,0);ctx.lineTo(384,210);
+  ctx.ellipse(256,210,128,22,0,0,Math.PI,true);ctx.fill();
+  // Coin top face
+  const coinTop=ctx.createRadialGradient(240,185,10,256,210,130);
+  coinTop.addColorStop(0,'#fde68a');coinTop.addColorStop(0.5,'#fbbf24');coinTop.addColorStop(1,'#d97706');
+  ctx.fillStyle=coinTop;ctx.beginPath();ctx.ellipse(256,210,128,22,0,0,Math.PI*2);ctx.fill();
+  // Inner ring on coin
+  ctx.strokeStyle='rgba(255,255,255,0.3)';ctx.lineWidth=3;
+  ctx.beginPath();ctx.ellipse(256,210,100,17,0,0,Math.PI*2);ctx.stroke();
+  // ₡ on coin
+  ctx.font='bold 52px "DM Sans",sans-serif';ctx.fillStyle='#92400e';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('₡',256,212);
+  // Sparkles
+  [[100,80,8,'#fde68a'],[420,70,6,'#fbbf24'],[440,300,9,'#fde68a'],[80,310,7,'#fbbf24'],[380,170,5,'#fff8dc']].forEach(([x,y,r,col])=>{
+    ctx.fillStyle=col;ctx.globalAlpha=0.8;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+  });
+  ctx.globalAlpha=1;
+  // Star sparkles
+  ctx.fillStyle='#fde68a';ctx.font='28px sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.globalAlpha=0.7;ctx.fillText('✦',110,120);ctx.fillText('✦',400,110);ctx.fillText('✦',390,340);
+  ctx.globalAlpha=1;
+  label(ctx,'PAGOS','#fbbf24');
+  ctx.restore();
+}
+
+// ── ICON 3 — FINANZAS (Púrpura + barras animadas) ────────────────
+function drawFinanzas(){
+  const c=document.getElementById('c3'),ctx=c.getContext('2d'),S=512;
+  ctx.save();clip(ctx);
+  const bg=ctx.createLinearGradient(0,0,S,S);
+  bg.addColorStop(0,'#130d42');bg.addColorStop(1,'#060318');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,S,S);
+  const gl=ctx.createRadialGradient(256,210,0,256,210,230);
+  gl.addColorStop(0,'rgba(124,111,247,0.38)');gl.addColorStop(1,'rgba(124,111,247,0)');
+  ctx.fillStyle=gl;ctx.fillRect(0,0,S,S);
+  // Grid
+  ctx.strokeStyle='rgba(124,111,247,0.15)';ctx.lineWidth=1.5;
+  [100,160,220,280,340].forEach(y=>{ctx.beginPath();ctx.moveTo(40,y);ctx.lineTo(472,y);ctx.stroke();});
+  // Bars with rounded tops
+  const bars=[
+    {x:44, h:80,  colors:['#5ef09a','#14c058']},
+    {x:148,h:145, colors:['#a78bfa','#7c6ff7']},
+    {x:252,h:210, colors:['#fbbf24','#f59e0b']},
+    {x:356,h:175, colors:['#38bdf8','#0ea5e9']},
+  ];
+  bars.forEach(b=>{
+    const g=ctx.createLinearGradient(0,360-b.h,0,360);
+    g.addColorStop(0,b.colors[0]);g.addColorStop(1,b.colors[1]);
+    ctx.fillStyle=g;rr(ctx,b.x,360-b.h,88,b.h,14);ctx.fill();
+    // Shimmer
+    ctx.fillStyle='rgba(255,255,255,0.12)';rr(ctx,b.x,360-b.h,40,b.h,14);ctx.fill();
+  });
+  // Trend line
+  const pts=[[88,276],[192,210],[296,146],[400,168]];
+  ctx.shadowColor='#a78bfa';ctx.shadowBlur=12;
+  ctx.strokeStyle='#fff';ctx.lineWidth=8;ctx.lineJoin='round';ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(pts[0][0],pts[0][1]);
+  pts.slice(1).forEach(p=>ctx.lineTo(p[0],p[1]));ctx.stroke();
+  ctx.shadowBlur=0;
+  pts.forEach(([x,y])=>{
+    ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();
+    ctx.fillStyle='#7c6ff7';ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fill();
+  });
+  // Up arrow
+  ctx.strokeStyle='#5ef09a';ctx.lineWidth=6;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(400,168);ctx.lineTo(440,100);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(430,100);ctx.lineTo(440,100);ctx.lineTo(440,115);ctx.stroke();
+  label(ctx,'FINANZAS','#a78bfa');
+  ctx.restore();
+}
+
+// ── ICON 4 — MIS FINANZAS (Rosa + persona + donut) ───────────────
+function drawMisFinanzas(){
+  const c=document.getElementById('c4'),ctx=c.getContext('2d'),S=512;
+  ctx.save();clip(ctx);
+  const bg=ctx.createLinearGradient(0,0,S,S);
+  bg.addColorStop(0,'#400d20');bg.addColorStop(1,'#180408');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,S,S);
+  const gl=ctx.createRadialGradient(256,210,0,256,210,230);
+  gl.addColorStop(0,'rgba(244,63,106,0.32)');gl.addColorStop(1,'rgba(244,63,106,0)');
+  ctx.fillStyle=gl;ctx.fillRect(0,0,S,S);
+  // Donut ring 1 (pink ~65%)
+  const a1=ctx.createLinearGradient(0,0,S,S);
+  a1.addColorStop(0,'#f43f6a');a1.addColorStop(1,'#fb923c');
+  ctx.strokeStyle=a1;ctx.lineWidth=52;ctx.lineCap='round';
+  ctx.beginPath();ctx.arc(256,210,148,-Math.PI/2,Math.PI*0.8);ctx.stroke();
+  // Donut ring 2 (purple)
+  const a2=ctx.createLinearGradient(S,0,0,S);
+  a2.addColorStop(0,'#7c6ff7');a2.addColorStop(1,'#38bdf8');
+  ctx.strokeStyle=a2;ctx.lineWidth=52;
+  ctx.beginPath();ctx.arc(256,210,148,Math.PI*0.8,-Math.PI/2);ctx.stroke();
+  // Inner circle
+  ctx.fillStyle='#200610';ctx.beginPath();ctx.arc(256,210,90,0,Math.PI*2);ctx.fill();
+  // Person head
+  const headG=ctx.createRadialGradient(248,188,5,256,196,36);
+  headG.addColorStop(0,'#fb7185');headG.addColorStop(1,'#f43f6a');
+  ctx.fillStyle=headG;ctx.beginPath();ctx.arc(256,196,38,0,Math.PI*2);ctx.fill();
+  // Person body arc
+  ctx.strokeStyle='#f43f6a';ctx.lineWidth=12;ctx.lineCap='round';
+  ctx.beginPath();ctx.moveTo(184,264);ctx.quadraticCurveTo(256,232,328,264);ctx.stroke();
+  // Gold coin
+  const cg=ctx.createRadialGradient(388,332,5,394,338,40);
+  cg.addColorStop(0,'#fde68a');cg.addColorStop(1,'#f59e0b');
+  ctx.fillStyle='rgba(0,0,0,0.3)';ctx.beginPath();ctx.arc(400,350,44,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle=cg;ctx.beginPath();ctx.arc(394,344,40,0,Math.PI*2);ctx.fill();
+  ctx.font='bold 42px "DM Sans",sans-serif';ctx.fillStyle='#78350f';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('₡',394,347);
+  // Legend
+  [[120,372,'#f43f6a'],[158,372,'#7c6ff7'],[196,372,'#f59e0b']].forEach(([x,y,col])=>{
+    ctx.fillStyle=col;ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fill();
+  });
+  label(ctx,'MIS FINANZAS','#fb7185');
+  ctx.restore();
+}
+
+// ── ICON 5 — PRÉSTAMOS (Azul + contrato + sello) ─────────────────
+function drawPrestamos(){
+  const c=document.getElementById('c5'),ctx=c.getContext('2d'),S=512;
+  ctx.save();clip(ctx);
+  const bg=ctx.createLinearGradient(0,0,S,S);
+  bg.addColorStop(0,'#041828');bg.addColorStop(1,'#020810');
+  ctx.fillStyle=bg;ctx.fillRect(0,0,S,S);
+  const gl=ctx.createRadialGradient(256,210,0,256,210,230);
+  gl.addColorStop(0,'rgba(14,165,233,0.3)');gl.addColorStop(1,'rgba(14,165,233,0)');
+  ctx.fillStyle=gl;ctx.fillRect(0,0,S,S);
+  // Document shadow
+  ctx.fillStyle='rgba(0,0,0,0.4)';rr(ctx,126,86,280,300,18);ctx.fill();
+  // Document body
+  const docG=ctx.createLinearGradient(116,76,396,376);
+  docG.addColorStop(0,'#0c2d45');docG.addColorStop(1,'#061828');
+  ctx.fillStyle=docG;rr(ctx,116,76,270,300,14);ctx.fill();
+  ctx.strokeStyle='#0ea5e9';ctx.lineWidth=2.5;rr(ctx,116,76,270,300,14);ctx.stroke();
+  // Folded corner
+  ctx.fillStyle='#0ea5e9';ctx.globalAlpha=0.2;
+  ctx.beginPath();ctx.moveTo(336,76);ctx.lineTo(386,76);ctx.lineTo(386,126);ctx.closePath();ctx.fill();
+  ctx.globalAlpha=1;
+  ctx.strokeStyle='#0ea5e9';ctx.lineWidth=1.5;ctx.globalAlpha=0.5;
+  ctx.beginPath();ctx.moveTo(336,76);ctx.lineTo(386,126);ctx.stroke();
+  ctx.globalAlpha=1;
+  // Document lines
+  ctx.strokeStyle='#0ea5e9';ctx.lineWidth=3;ctx.lineCap='round';ctx.globalAlpha=0.4;
+  [[148,150,320],[148,190,300],[148,230,280],[148,270,240]].forEach(([x,y,w])=>{
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+w-x*0.2,y);ctx.stroke();
+  });
+  ctx.globalAlpha=1;
+  // Title line (thicker)
+  const titleG=ctx.createLinearGradient(148,110,320,110);
+  titleG.addColorStop(0,'#38bdf8');titleG.addColorStop(1,'#0ea5e9');
+  ctx.strokeStyle=titleG;ctx.lineWidth=8;ctx.globalAlpha=0.9;
+  ctx.beginPath();ctx.moveTo(148,110);ctx.lineTo(310,110);ctx.stroke();
+  ctx.globalAlpha=1;
+  // Approval stamp
+  ctx.save();ctx.translate(340,300);ctx.rotate(-0.3);
+  // Stamp outer ring
+  ctx.strokeStyle='#22c55e';ctx.lineWidth=6;ctx.globalAlpha=0.9;
+  ctx.beginPath();ctx.arc(0,0,64,0,Math.PI*2);ctx.stroke();
+  ctx.beginPath();ctx.arc(0,0,54,0,Math.PI*2);ctx.stroke();
+  // Stamp text
+  ctx.font='bold 28px "DM Sans",sans-serif';ctx.fillStyle='#22c55e';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('✓',0,0);
+  ctx.font='bold 13px "DM Sans",sans-serif';ctx.fillText('APROBADO',-1,22);
+  ctx.globalAlpha=1;ctx.restore();
+  // ₡ symbol bottom left
+  const cg=ctx.createLinearGradient(80,280,160,360);
+  cg.addColorStop(0,'#38bdf8');cg.addColorStop(1,'#0ea5e9');
+  ctx.fillStyle=cg;ctx.font='bold 70px "DM Sans",sans-serif';
+  ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('₡',116,330);
+  label(ctx,'PRÉSTAMOS','#38bdf8');
+  ctx.restore();
+}
+
+window.onload=()=>{
+  drawControl();
+  drawPagos();
+  drawFinanzas();
+  drawMisFinanzas();
+  drawPrestamos();
+};
+</script>
+</body>
+</html>
