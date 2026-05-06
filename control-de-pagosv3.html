@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <meta name="apple-mobile-web-app-capable" content="yes"/>
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+  <meta name="apple-mobile-web-app-title" content="Pagos"/>
+  <meta name="theme-color" content="#0d0d1a"/>
+  <title>Control de Pagos</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    :root{
+      --bg:#0d0d1a;--bg2:#13132a;--bg3:#1a1a35;--border:#252550;
+      --text:#f0f0ff;--text2:#8888bb;--text3:#44446a;
+      --green:#10e58a;--green-bg:rgba(16,229,138,0.08);--green-border:rgba(16,229,138,0.25);
+      --amber:#ffb340;--amber-bg:rgba(255,179,64,0.08);--amber-border:rgba(255,179,64,0.25);
+      --red:#ff4d6d;--red-bg:rgba(255,77,109,0.08);--red-border:rgba(255,77,109,0.25);
+      --blue:#5b8dee;--blue-bg:rgba(91,141,238,0.08);--blue-border:rgba(91,141,238,0.25);
+      --accent:#7c6aff;--accent2:#c084fc;
+      --grad:linear-gradient(135deg,#7c6aff,#c084fc);
+      --grad-green:linear-gradient(135deg,#10e58a,#05c47a);
+      --grad-amber:linear-gradient(135deg,#ffb340,#ff8c00);
+      --grad-red:linear-gradient(135deg,#ff4d6d,#cc0033);
+      --accent-glow:rgba(124,106,255,0.2);
+      --radius:18px;--radius-sm:13px;--radius-xs:8px;
+    }
+    *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;overscroll-behavior:none}
+    body::before{content:'';position:fixed;inset:0;background:
+      radial-gradient(ellipse 70% 50% at 50% -5%,rgba(124,106,255,0.13) 0%,transparent 70%),
+      radial-gradient(ellipse 50% 40% at 95% 90%,rgba(192,132,252,0.07) 0%,transparent 60%),
+      radial-gradient(ellipse 40% 30% at 5% 60%,rgba(16,229,138,0.04) 0%,transparent 60%);
+      pointer-events:none;z-index:0}
+    ::-webkit-scrollbar{width:3px}
+    ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+    #app{min-height:100vh;padding-bottom:calc(82px + env(safe-area-inset-bottom));position:relative;z-index:1}
+
+    /* ── CARDS ── */
+    .card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);position:relative;overflow:hidden}
+    .card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,106,255,0.35),transparent);pointer-events:none}
+
+    /* ── BUTTONS ── */
+    .btn-g{background:var(--grad);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;transition:all .2s;padding:11px 18px;white-space:nowrap;box-shadow:0 4px 20px rgba(124,106,255,0.3)}
+    .btn-g:active{transform:scale(0.96);box-shadow:0 2px 8px rgba(124,106,255,0.2)}
+    .btn-x{background:var(--bg3);color:var(--text2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .2s;padding:11px 18px}
+    .btn-x:active{background:var(--border);transform:scale(0.97)}
+    .btn-sm{background:var(--grad);color:#fff;border:none;border-radius:var(--radius-xs);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:6px 12px;box-shadow:0 3px 12px rgba(124,106,255,0.25)}
+    .btn-sm:active{transform:scale(0.95)}
+    .btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);border-radius:var(--radius-sm);font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;padding:11px 18px;transition:all .15s}
+    .btn-danger:active{transform:scale(0.97)}
+
+    /* ── INPUTS ── */
+    .inp{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:13px 15px;color:var(--text);font-family:inherit;font-size:15px;width:100%;outline:none;transition:all .2s;-webkit-appearance:none}
+    .inp:focus{border-color:var(--accent);background:#1e1e40;box-shadow:0 0 0 3px rgba(124,106,255,0.15)}
+    .inp::placeholder{color:var(--text3)}
+    select.inp{-webkit-appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%238888bb' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:36px}
+    select.inp option{background:var(--bg3);color:var(--text)}
+
+    /* ── PAYMENT ROWS ── */
+    .prow{display:flex;align-items:center;gap:12px;padding:13px 16px;border-radius:var(--radius-sm);cursor:pointer;user-select:none;transition:all .15s}
+    .prow:active{opacity:.7;transform:scale(0.99)}
+    .chk{width:26px;height:26px;border-radius:9px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .25s cubic-bezier(0.34,1.56,0.64,1);background:var(--bg3)}
+    .chk.on{background:var(--grad-green);border-color:var(--green);box-shadow:0 4px 14px rgba(16,229,138,0.35);transform:scale(1.08)}
+    .chk-mark{display:none;color:#000;font-size:13px;font-weight:900}
+    .chk.on .chk-mark{display:block}
+
+    /* ── MONTH NAV BUTTONS ── */
+    .nb{background:var(--bg3);border:1px solid var(--border);color:var(--text2);border-radius:10px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;flex-shrink:0;transition:all .15s}
+    .nb:active{background:var(--border);color:var(--text);transform:scale(0.92)}
+
+    /* ── TABS ── */
+    .tab-wrap{display:flex;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px;gap:4px}
+    .tab-pill{flex:1;padding:10px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:700;border-radius:10px;transition:all .2s;user-select:none;color:var(--text3)}
+    .tab-pill.on{background:var(--grad);color:#fff;box-shadow:0 4px 16px rgba(124,106,255,0.3)}
+    .bdg{display:inline-flex;align-items:center;justify-content:center;background:var(--red);color:#fff;border-radius:99px;min-width:17px;height:17px;font-size:10px;font-weight:700;padding:0 4px;margin-left:5px;vertical-align:middle}
+
+    /* ── BOTTOM NAV ── */
+    .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:rgba(13,13,26,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);z-index:50;display:flex;justify-content:center;padding:6px 8px;padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+    .nav-inner{display:flex;width:100%;max-width:480px;gap:4px}
+    .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 6px;cursor:pointer;gap:3px;border-radius:14px;transition:all .2s;color:var(--text3)}
+    .nav-item.on{background:linear-gradient(135deg,rgba(124,106,255,0.25),rgba(192,132,252,0.15));border:1px solid rgba(124,106,255,0.3);color:#fff}
+    .nav-lbl{font-size:9px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .nav-icon{font-size:21px;line-height:1;transition:transform .25s cubic-bezier(0.34,1.56,0.64,1)}
+    .nav-item.on .nav-icon{transform:scale(1.2)}
+
+    /* ── STICKY HEADER ── */
+    .sticky-hdr{position:sticky;top:0;z-index:40;background:rgba(13,13,26,0.95);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+    .hdr-inner{max-width:480px;margin:0 auto;padding:18px 16px 0;padding-top:calc(52px + env(safe-area-inset-top))}
+
+    /* ── OVERLAYS / SHEETS ── */
+    .ov{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);display:flex;align-items:flex-end;justify-content:center;z-index:99;opacity:0;pointer-events:none;transition:opacity .25s}
+    .ov.show{opacity:1;pointer-events:all}
+    .sheet{background:var(--bg2);border:1px solid var(--border);border-top:1px solid rgba(124,106,255,0.35);border-radius:26px 26px 0 0;padding:22px 20px 44px;width:100%;max-width:480px;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1)}
+    .sheet.show{transform:translateY(0)}
+    .drag-handle{width:36px;height:4px;background:var(--border);border-radius:99px;margin:0 auto 20px}
+    .sheet-title{font-size:18px;font-weight:800;margin-bottom:18px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+    .sheet-field{margin-bottom:13px}
+    .sheet-label{display:block;font-size:12px;color:var(--text2);margin-bottom:7px;font-weight:600}
+
+    .dov{position:fixed;inset:0;background:rgba(0,0,0,.8);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);display:flex;align-items:center;justify-content:center;z-index:99;padding:16px;opacity:0;pointer-events:none;transition:opacity .25s}
+    .dov.show{opacity:1;pointer-events:all}
+    .dbox{background:var(--bg2);border:1px solid var(--red-border);border-radius:22px;padding:28px;width:100%;max-width:290px;text-align:center;transform:scale(.9);transition:transform .25s cubic-bezier(0.34,1.56,0.64,1)}
+    .dov.show .dbox{transform:scale(1)}
+
+    /* ── HISTORY CARDS ── */
+    .hcard{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:12px;cursor:pointer;transition:border-color .2s,box-shadow .2s;position:relative}
+    .hcard::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,106,255,0.3),transparent);pointer-events:none}
+    .hcard.open{border-color:rgba(124,106,255,0.45);box-shadow:0 4px 24px rgba(124,106,255,0.1)}
+    .hcard-detail{display:none}
+    .hcard.open .hcard-detail{display:block}
+
+    /* ── PROGRESS BAR ── */
+    .pbar{height:8px;background:var(--bg3);border-radius:99px;overflow:hidden;box-shadow:inset 0 1px 3px rgba(0,0,0,0.3)}
+    .pfill{height:100%;border-radius:99px;transition:width .6s cubic-bezier(.4,0,.2,1)}
+
+    /* ── STAT CARDS ── */
+    .stat-grid{display:flex;gap:8px;margin-bottom:14px}
+    .stat-card{flex:1;padding:13px 12px;border-radius:var(--radius-sm);background:var(--bg3);border:1px solid var(--border);position:relative;overflow:hidden}
+    .stat-glow{position:absolute;top:-16px;right:-16px;width:55px;height:55px;border-radius:50%;opacity:0.13;pointer-events:none}
+    .stat-lbl{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;font-weight:700;margin-bottom:5px}
+    .stat-val{font-size:14px;font-weight:800;line-height:1;font-family:'JetBrains Mono',monospace}
+
+    /* ── MONTH NAV ── */
+    .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .month-name{font-size:17px;font-weight:800;letter-spacing:-0.4px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+    /* ── CONTENT ── */
+    .content{max-width:480px;margin:0 auto;padding:14px 16px 0}
+
+    /* ── EDIT INPUT ── */
+    .edit-row{display:flex;gap:6px;align-items:center}
+    .edit-inp{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:8px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:13px;width:120px;outline:none;-webkit-appearance:none;transition:border-color .15s}
+    .edit-inp:focus{border-color:var(--accent)}
+
+    /* ── ROW ACTIONS ── */
+    .row-actions{display:flex;gap:2px}
+    .action-btn{background:transparent;border:none;cursor:pointer;font-size:14px;opacity:.3;padding:4px 4px;transition:opacity .15s;line-height:1}
+    .action-btn:active{opacity:1;transform:scale(0.9)}
+
+    /* ── EMPTY STATE ── */
+    .empty{text-align:center;padding:50px 20px;color:var(--text3)}
+    .empty-icon{font-size:38px;margin-bottom:12px;display:block}
+    .empty-text{font-size:14px;line-height:1.7}
+
+    /* ── SECTION LABELS ── */
+    .sec-lbl{font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.1em;display:block;padding-bottom:8px}
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .fade-up{animation:fadeUp .22s cubic-bezier(0.22,1,0.36,1)}
+    @keyframes blink{0%,100%{opacity:1}50%{opacity:0.4}}
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const MONTHS=["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+
+const DEFAULT_PAYMENTS=[
+  {id:1,  name:"Comida",               amount:120000,icon:"🍽️",category:"primera"},
+  {id:2,  name:"Teléfonos",            amount:50000, icon:"📱",category:"primera"},
+  {id:3,  name:"Gasolina",             amount:52000, icon:"⛽",category:"primera"},
+  {id:4,  name:"Salida primera semana",amount:33000, icon:"🎉",category:"primera"},
+  {id:5,  name:"Salida segunda semana",amount:33000, icon:"🎉",category:"primera"},
+  {id:6,  name:"Promerica",            amount:60000, icon:"🏦",category:"primera"},
+  {id:7,  name:"Bp1",                  amount:20000, icon:"💳",category:"primera"},
+  {id:8,  name:"Bp2",                  amount:20000, icon:"💳",category:"primera"},
+  {id:9,  name:"Comida",               amount:120000,icon:"🍽️",category:"segunda"},
+  {id:10, name:"Internet",             amount:27000, icon:"📡",category:"segunda"},
+  {id:11, name:"Gasolina",             amount:52000, icon:"⛽",category:"segunda"},
+  {id:12, name:"Agua",                 amount:6000,  icon:"💧",category:"segunda"},
+  {id:13, name:"Banco",                amount:300000,icon:"🏦",category:"segunda"},
+  {id:14, name:"Corriente",            amount:37000, icon:"⚡",category:"segunda"},
+  {id:15, name:"Primera se.",          amount:90000, icon:"💰",category:"segunda"},
+  {id:16, name:"Segunda se.",          amount:90000, icon:"💰",category:"segunda"},
+  {id:17, name:"Davivienda",           amount:190000,icon:"🏦",category:"segunda"},
+  {id:18, name:"Bac",                  amount:40000, icon:"💳",category:"segunda"},
+  {id:19, name:"Canapé",              amount:43000, icon:"🛋️",category:"segunda"},
+  {id:20, name:"Casa",                 amount:100000,icon:"🏠",category:"segunda"},
+];
+
+function load(key,def){try{const s=localStorage.getItem(key);return s?JSON.parse(s):def;}catch{return def;}}
+function save(key,val){try{localStorage.setItem(key,JSON.stringify(val));}catch{}}
+
+const now=new Date();
+let state={
+  month:now.getMonth(),year:now.getFullYear(),
+  payments:load("cp6_items",DEFAULT_PAYMENTS),
+  paid:load("cp6_paid",{}),
+  history:load("cp6_hist",{}),
+  view:"pagos",tab:"primera",editId:null,editAmt:"",deleteId:null,histOpen:null,showAdd:false,
+};
+
+function setState(patch){
+  Object.assign(state,typeof patch==="function"?patch(state):patch);
+  save("cp6_items",state.payments);save("cp6_paid",state.paid);save("cp6_hist",state.history);
+  render();
+}
+
+const fmt=n=>n?"₡"+Number(n).toLocaleString("es-CR"):"—";
+
+function computed(){
+  const{month,year,payments,paid,tab}=state;
+  const mk=`${year}-${month}`;
+  const paidSet=paid[mk]||{};
+  const q1=payments.filter(p=>p.category==="primera");
+  const q2=payments.filter(p=>p.category==="segunda");
+  const shown=tab==="primera"?q1:q2;
+  const totalQ1=q1.reduce((a,p)=>a+(p.amount||0),0);
+  const totalQ2=q2.reduce((a,p)=>a+(p.amount||0),0);
+  const paidQ1=q1.filter(p=>paidSet[p.id]).reduce((a,p)=>a+(p.amount||0),0);
+  const paidQ2=q2.filter(p=>paidSet[p.id]).reduce((a,p)=>a+(p.amount||0),0);
+  const totalAll=totalQ1+totalQ2,paidAll=paidQ1+paidQ2,pendingAll=totalAll-paidAll;
+  const paidCount=payments.filter(p=>paidSet[p.id]).length;
+  const progress=totalAll>0?(paidAll/totalAll)*100:(paidCount/payments.length)*100||0;
+  const pendQ1=q1.filter(p=>!paidSet[p.id]).length;
+  const pendQ2=q2.filter(p=>!paidSet[p.id]).length;
+  return{mk,paidSet,q1,q2,shown,totalQ1,totalQ2,paidQ1,paidQ2,totalAll,paidAll,pendingAll,paidCount,progress,pendQ1,pendQ2};
+}
+
+function saveSnapshot(){
+  const{month,year,payments}=state;const c=computed();
+  const snap={month,year,label:`${MONTHS[month]} ${year}`,total:c.totalAll,paid:c.paidAll,pending:c.pendingAll,count:payments.length,paidCount:c.paidCount,items:payments.map(p=>({...p,paid:!!c.paidSet[p.id]}))};
+  setState(s=>({history:{...s.history,[c.mk]:snap}}));
+}
+function prevMonth(){const c=computed();if(c.paidCount>0)saveSnapshot();setState(s=>s.month===0?{month:11,year:s.year-1}:{month:s.month-1});}
+function nextMonth(){const c=computed();if(c.paidCount>0)saveSnapshot();setState(s=>s.month===11?{month:0,year:s.year+1}:{month:s.month+1});}
+function togglePaid(id){const c=computed();setState(s=>({paid:{...s.paid,[c.mk]:{...s.paid[c.mk],[id]:!c.paidSet[id]}}}));}
+function addPayment(name,amount,icon,category){if(!name.trim())return;setState(s=>({payments:[...s.payments,{id:Date.now(),name,amount:parseFloat(amount)||0,icon,category}],showAdd:false}));}
+function delPayment(id){setState(s=>({payments:s.payments.filter(p=>p.id!==id),deleteId:null}));}
+function saveEditAmt(id,amt){setState(s=>({payments:s.payments.map(p=>p.id===id?{...p,amount:parseFloat(amt)||0}:p),editId:null}));}
+
+// ── DOM Builder ──────────────────────────────────────────────────
+function h(tag,attrs,...children){
+  const el=document.createElement(tag);
+  for(const[k,v]of Object.entries(attrs||{})){
+    if(k==="class")el.className=v;
+    else if(k.startsWith("on"))el.addEventListener(k.slice(2).toLowerCase(),v);
+    else el.setAttribute(k,v);
+  }
+  for(const c of children.flat()){
+    if(c==null||c===false)continue;
+    el.appendChild(typeof c==="string"||typeof c==="number"?document.createTextNode(c):c);
+  }
+  return el;
+}
+
+function badge(n){
+  if(!n)return null;
+  return h("span",{class:"bdg"},String(n));
+}
+
+function statCard(label,val,color,glowColor){
+  const card=h("div",{class:"stat-card"},
+    h("div",{class:"stat-lbl"},label),
+    h("div",{class:"stat-val",style:`color:${color}`},val)
+  );
+  if(glowColor){const g=document.createElement("div");g.className="stat-glow";g.style.background=glowColor;card.appendChild(g);}
+  return card;
+}
+
+function paymentRow(p,isPaid,c){
+  const isEditing=state.editId===p.id;
+  const chk=h("div",{class:`chk${isPaid?" on":""}`,onclick:(e)=>{e.stopPropagation();if(!isEditing)togglePaid(p.id);}},
+    h("span",{class:"chk-mark"},"✓")
+  );
+  const icon=h("div",{style:"font-size:20px;flex-shrink:0;line-height:1"},p.icon);
+  const nameEl=h("div",{style:"flex:1;min-width:0"},
+    h("div",{style:`font-weight:600;font-size:14px;text-decoration:${isPaid?"line-through":"none"};color:${isPaid?"var(--text3)":"var(--text)"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis`},p.name)
+  );
+
+  let rightEl;
+  if(isEditing){
+    const inp=h("input",{class:"edit-inp",type:"number",value:state.editAmt,placeholder:"0"});
+    inp.addEventListener("input",e=>{state.editAmt=e.target.value;});
+    inp.addEventListener("keydown",e=>{if(e.key==="Enter")saveEditAmt(p.id,state.editAmt);if(e.key==="Escape")setState({editId:null});});
+    setTimeout(()=>inp.focus(),50);
+    rightEl=h("div",{class:"edit-row",onclick:e=>e.stopPropagation()},
+      inp,
+      h("button",{class:"btn-sm",onclick:()=>saveEditAmt(p.id,state.editAmt)},"✓")
+    );
+  } else {
+    const amtEl=h("div",{style:`font-weight:700;font-size:13px;color:${isPaid?"var(--text3)":"var(--text)"};min-width:80px;text-align:right;font-family:'JetBrains Mono',monospace`},
+      p.amount>0?"₡"+Number(p.amount).toLocaleString("es-CR"):h("span",{style:"color:var(--text3);font-weight:400"},"—")
+    );
+    const acts=h("div",{class:"row-actions",onclick:e=>e.stopPropagation()},
+      h("button",{class:"action-btn",onclick:()=>setState({editId:p.id,editAmt:p.amount||""})},"✏️"),
+      h("button",{class:"action-btn",onclick:()=>setState({deleteId:p.id})},"🗑️")
+    );
+    rightEl=h("div",{style:"display:flex;align-items:center;gap:4px"},amtEl,acts);
+  }
+
+  const row=h("div",{class:"prow",onclick:()=>{if(!isEditing)togglePaid(p.id);}},chk,icon,nameEl,rightEl);
+  return h("div",{class:"card fade-up",style:`opacity:${isPaid?0.5:1};transition:opacity .2s;margin-bottom:8px`},row);
+}
+
+function historyCard(snap){
+  const key=`${snap.year}-${snap.month}`;
+  const isOpen=state.histOpen===key;
+  const pct=snap.total>0?Math.round((snap.paid/snap.total)*100):0;
+  const pctColor=pct===100?"var(--green)":pct>50?"var(--amber)":"var(--red)";
+  const barGrad=pct===100?"var(--grad-green)":pct>50?"var(--grad-amber)":"var(--grad-red)";
+
+  const header=h("div",{style:"padding:16px 18px"},
+    h("div",{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:12px"},
+      h("div",{},
+        h("div",{style:"font-size:16px;font-weight:800;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text"},snap.label),
+        h("div",{style:"font-size:11px;color:var(--text3);margin-top:3px;font-weight:500"},`${snap.paidCount} de ${snap.count} pagos`)
+      ),
+      h("div",{style:"text-align:right"},
+        h("div",{style:`font-size:15px;font-weight:800;color:${pctColor};font-family:'JetBrains Mono',monospace`},`${pct}%`),
+        h("div",{style:"font-size:11px;color:var(--text3);font-family:'JetBrains Mono',monospace;margin-top:2px"},`${fmt(snap.paid)} / ${fmt(snap.total)}`)
+      )
+    ),
+    h("div",{class:"pbar"},h("div",{class:"pfill",style:`width:${pct}%;background:${barGrad}`}))
+  );
+
+  let detail=null;
+  if(isOpen){
+    const rows=["primera","segunda"].map(cat=>{
+      const items=snap.items.filter(i=>i.category===cat);
+      return h("div",{style:cat==="primera"?"margin-bottom:16px":""},
+        h("div",{style:"font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.1em;margin-bottom:8px;padding:0 2px"},cat==="primera"?"1ª Quincena":"2ª Quincena"),
+        ...items.map(i=>
+          h("div",{style:"display:flex;align-items:center;gap:10px;padding:9px 6px;border-bottom:1px solid var(--border)"},
+            h("div",{style:`width:18px;height:18px;border-radius:6px;background:${i.paid?"var(--green-bg)":"var(--bg3)"};border:1.5px solid ${i.paid?"var(--green)":"var(--border)"};display:flex;align-items:center;justify-content:center;flex-shrink:0`},
+              i.paid?h("span",{style:"color:var(--green);font-size:10px;font-weight:900"},"✓"):null
+            ),
+            h("span",{style:"font-size:14px;line-height:1"},i.icon),
+            h("span",{style:`flex:1;font-size:13px;color:${i.paid?"var(--text3)":"var(--text2)"};text-decoration:${i.paid?"line-through":"none"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500`},i.name),
+            h("span",{style:`font-size:12px;font-weight:700;color:${i.paid?"var(--green)":"var(--text3)"};font-family:'JetBrains Mono',monospace`},
+              i.amount>0?"₡"+Number(i.amount).toLocaleString("es-CR"):"—"
+            )
+          )
+        )
+      );
+    });
+    detail=h("div",{style:"border-top:1px solid var(--border);padding:14px 18px 16px",class:"hcard-detail"},
+      ...rows,
+      h("div",{style:"margin-top:14px;display:flex;justify-content:flex-end;gap:18px;font-size:12px"},
+        h("span",{style:"color:var(--text3)"},"Pagado: ",h("strong",{style:"color:var(--green);font-family:'JetBrains Mono',monospace"},fmt(snap.paid))),
+        h("span",{style:"color:var(--text3)"},"Pendiente: ",h("strong",{style:`color:${snap.pending>0?"var(--red)":"var(--green)"};font-family:'JetBrains Mono',monospace`},fmt(snap.pending)))
+      )
+    );
+  }
+
+  return h("div",{class:`hcard${isOpen?" open":""}`,onclick:()=>setState({histOpen:isOpen?null:key})},header,detail||"");
+}
+
+// ── Add Modal ────────────────────────────────────────────────────
+function buildAddModal(){
+  let _name="",_amt="",_icon="💳",_cat="primera";
+
+  const iconInp=h("input",{class:"inp",placeholder:"😀",maxlength:"2",style:"width:60px;text-align:center;font-size:20px;padding:13px 8px"});
+  iconInp.value=_icon;
+  iconInp.addEventListener("input",e=>_icon=e.target.value||"💳");
+
+  const nameInp=h("input",{class:"inp",placeholder:"Nombre del pago"});
+  nameInp.addEventListener("input",e=>_name=e.target.value);
+  nameInp.addEventListener("keydown",e=>{if(e.key==="Enter")doAdd();});
+
+  const amtInp=h("input",{class:"inp",type:"number",placeholder:"Monto en ₡ (ej: 50000)"});
+  amtInp.addEventListener("input",e=>_amt=e.target.value);
+
+  const catSel=h("select",{class:"inp"},
+    h("option",{value:"primera"},"1ª Quincena"),
+    h("option",{value:"segunda"},"2ª Quincena")
+  );
+  catSel.addEventListener("change",e=>_cat=e.target.value);
+
+  function doAdd(){addPayment(_name,_amt,_icon,_cat);}
+
+  const sheet=h("div",{class:`sheet${state.showAdd?" show":""}`,onclick:e=>e.stopPropagation()},
+    h("div",{class:"drag-handle"}),
+    h("div",{class:"sheet-title"},"✨ Nuevo pago"),
+    h("div",{class:"sheet-field"},h("label",{class:"sheet-label"},"Ícono y nombre"),h("div",{style:"display:flex;gap:8px"},iconInp,nameInp)),
+    h("div",{class:"sheet-field"},h("label",{class:"sheet-label"},"Monto"),amtInp),
+    h("div",{class:"sheet-field"},h("label",{class:"sheet-label"},"Quincena"),catSel),
+    h("div",{style:"display:flex;gap:10px;margin-top:6px"},
+      h("button",{class:"btn-x",style:"flex:1",onclick:()=>setState({showAdd:false})},"Cancelar"),
+      h("button",{class:"btn-g",style:"flex:2",onclick:doAdd},"Agregar pago")
+    )
+  );
+
+  setTimeout(()=>{
+    sheet.classList.toggle("show",state.showAdd);
+    if(state.showAdd)setTimeout(()=>nameInp.focus(),350);
+  },10);
+
+  return h("div",{class:`ov${state.showAdd?" show":""}`,onclick:()=>setState({showAdd:false})},sheet);
+}
+
+// ── Delete Modal ─────────────────────────────────────────────────
+function buildDeleteModal(){
+  const dbox=h("div",{class:"dbox",onclick:e=>e.stopPropagation()},
+    h("div",{style:"font-size:32px;margin-bottom:12px"},"🗑️"),
+    h("div",{style:"font-weight:800;font-size:17px;margin-bottom:8px;color:var(--red)"},"¿Eliminar pago?"),
+    h("div",{style:"font-size:13px;color:var(--text3);margin-bottom:22px;line-height:1.6"},"Se borrará de todos los meses"),
+    h("div",{style:"display:flex;gap:10px"},
+      h("button",{class:"btn-x",style:"flex:1",onclick:()=>setState({deleteId:null})},"Cancelar"),
+      h("button",{class:"btn-danger",style:"flex:1",onclick:()=>delPayment(state.deleteId)},"Sí, borrar")
+    )
+  );
+  return h("div",{class:`dov${state.deleteId?" show":""}`,onclick:()=>setState({deleteId:null})},dbox);
+}
+
+// ── Main Render ──────────────────────────────────────────────────
+function render(){
+  const app=document.getElementById("app");
+  const{view,tab,month,year,payments}=state;
+  const c=computed();
+
+  // ── HEADER ──
+  let headerContent;
+
+  if(view==="pagos"){
+    const progress=Math.min(c.progress,100);
+    const pendCol=c.pendingAll>0?"var(--red)":"var(--green)";
+
+    headerContent=h("div",{},
+      // Topbar
+      h("div",{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:16px"},
+        h("div",{},
+          h("div",{style:"font-size:26px;font-weight:800;letter-spacing:-0.8px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text"},"Control de Pagos"),
+          h("div",{style:"font-size:12px;color:var(--text3);margin-top:3px;font-weight:500"},"Registro mensual · Colones ₡")
+        ),
+        h("div",{style:"display:flex;align-items:center;gap:8px"},
+          h("div",{style:"background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:7px 13px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--accent2)"},
+            h("span",{style:"width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;animation:blink 2s infinite"}),
+            "Activo"
+          ),
+          h("button",{class:"btn-sm",onclick:()=>setState({showAdd:true})},"＋")
+        )
+      ),
+      // Month nav
+      h("div",{class:"month-nav"},
+        h("button",{class:"nb",onclick:prevMonth},"‹"),
+        h("div",{class:"month-name"},`${MONTHS[month]} ${year}`),
+        h("button",{class:"nb",onclick:nextMonth},"›")
+      ),
+      // Stats
+      h("div",{class:"stat-grid"},
+        statCard("💰 Total mes",fmt(c.totalAll),"var(--accent2)","var(--accent)"),
+        statCard("✅ Pagado",fmt(c.paidAll),"var(--green)","var(--green)"),
+        statCard("⏳ Pendiente",fmt(c.pendingAll),pendCol,c.pendingAll>0?"var(--red)":"var(--green)")
+      ),
+      // Progress
+      h("div",{style:"margin-bottom:14px"},
+        h("div",{style:"display:flex;justify-content:space-between;margin-bottom:7px"},
+          h("span",{style:"font-size:11px;color:var(--text3);font-weight:500"},`${c.paidCount} de ${payments.length} pagos completados`),
+          h("span",{style:"font-size:11px;color:var(--green);font-weight:700;font-family:'JetBrains Mono',monospace"},`${Math.round(progress)}%`)
+        ),
+        h("div",{class:"pbar"},
+          h("div",{class:"pfill",style:`width:${progress}%;background:var(--grad-green)`})
+        )
+      ),
+      // Tabs
+      h("div",{class:"tab-wrap",style:"padding-bottom:18px"},
+        h("div",{class:`tab-pill${tab==="primera"?" on":""}`,onclick:()=>setState({tab:"primera"})},
+          "1ª Quincena",badge(c.pendQ1)
+        ),
+        h("div",{class:`tab-pill${tab==="segunda"?" on":""}`,onclick:()=>setState({tab:"segunda"})},
+          "2ª Quincena",badge(c.pendQ2)
+        )
+      )
+    );
+  } else {
+    headerContent=h("div",{style:"padding-bottom:16px"},
+      h("div",{style:"display:flex;align-items:center;justify-content:space-between;margin-bottom:4px"},
+        h("div",{style:"font-size:26px;font-weight:800;letter-spacing:-0.8px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text"},"Histórico"),
+        h("div",{style:"background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:7px 13px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--accent2)"},
+          h("span",{style:"width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);display:inline-block;animation:blink 2s infinite"}),
+          "Activo"
+        )
+      ),
+      h("div",{style:"font-size:12px;color:var(--text3);font-weight:500"},"Registro de meses guardados")
+    );
+  }
+
+  const header=h("div",{class:"sticky-hdr"},h("div",{class:"hdr-inner"},headerContent));
+
+  // ── PAGOS CONTENT ──
+  let mainContent;
+
+  if(view==="pagos"){
+    const shownPend=c.shown.filter(p=>!c.paidSet[p.id]);
+    const shownPaid=c.shown.filter(p=> c.paidSet[p.id]);
+    const qTotal=tab==="primera"?c.totalQ1:c.totalQ2;
+    const qPaid=tab==="primera"?c.paidQ1:c.paidQ2;
+    const parts=[];
+
+    // Quincena summary bar
+    parts.push(
+      h("div",{style:"display:flex;justify-content:space-between;align-items:center;padding:4px 2px 12px"},
+        h("span",{style:"font-size:12px;font-weight:700;color:var(--text2)"},tab==="primera"?"1ª Quincena":"2ª Quincena"),
+        h("span",{style:"font-size:12px;color:var(--text3);font-family:'JetBrains Mono',monospace"},`${fmt(qPaid)} / ${fmt(qTotal)}`)
+      )
+    );
+
+    if(shownPend.length>0){
+      parts.push(h("div",{style:"margin-bottom:14px"},
+        h("div",{style:"font-size:10px;color:var(--amber);font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:0 2px 10px;display:flex;align-items:center;gap:6px"},
+          h("span",{style:"display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 6px var(--amber)"}),
+          `Pendientes (${shownPend.length})`
+        ),
+        ...shownPend.map(p=>paymentRow(p,false,c))
+      ));
+    }
+
+    if(shownPaid.length>0){
+      parts.push(h("div",{},
+        h("div",{style:"font-size:10px;color:var(--green);font-weight:700;text-transform:uppercase;letter-spacing:.1em;padding:0 2px 10px;display:flex;align-items:center;gap:6px"},
+          h("span",{style:"display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green)"}),
+          `Pagados (${shownPaid.length})`
+        ),
+        ...shownPaid.map(p=>paymentRow(p,true,c))
+      ));
+    }
+
+    if(c.shown.length===0){
+      parts.push(h("div",{class:"empty"},
+        h("span",{class:"empty-icon"},"📋"),
+        h("div",{class:"empty-text"},"Sin pagos en esta quincena")
+      ));
+    }
+
+    if(c.paidCount>0){
+      parts.push(h("div",{style:"text-align:center;margin-top:24px;padding-bottom:8px"},
+        h("button",{class:"btn-x",style:"font-size:12px",onclick:saveSnapshot},"💾 Guardar en histórico")
+      ));
+    }
+
+    mainContent=h("div",{class:"content"},...parts);
+
+  } else {
+    // ── HISTÓRICO ──
+    const entries=Object.values(state.history).sort((a,b)=>(b.year*12+b.month)-(a.year*12+a.month));
+    if(entries.length===0){
+      mainContent=h("div",{class:"content"},
+        h("div",{class:"empty"},
+          h("span",{class:"empty-icon"},"🗂️"),
+          h("div",{style:"font-size:15px;font-weight:700;margin-bottom:6px;color:var(--text2)"},"Sin histórico todavía"),
+          h("div",{class:"empty-text"},"Al navegar entre meses con pagos marcados,\nse guarda automáticamente")
+        )
+      );
+    } else {
+      mainContent=h("div",{class:"content"},...entries.map(historyCard));
+    }
+  }
+
+  // ── BOTTOM NAV ──
+  const bottomNav=h("div",{class:"bottom-nav"},
+    h("div",{class:"nav-inner"},
+      h("div",{class:`nav-item${view==="pagos"?" on":""}`,onclick:()=>setState({view:"pagos"})},
+        h("span",{class:"nav-icon"},"💸"),
+        h("span",{class:"nav-lbl"},"Pagos")
+      ),
+      h("div",{class:`nav-item${view==="historico"?" on":""}`,onclick:()=>setState({view:"historico"})},
+        h("span",{class:"nav-icon"},"🗂️"),
+        h("span",{class:"nav-lbl"},"Histórico")
+      )
+    )
+  );
+
+  app.innerHTML="";
+  app.appendChild(header);
+  app.appendChild(mainContent);
+  app.appendChild(bottomNav);
+  app.appendChild(buildAddModal());
+  app.appendChild(buildDeleteModal());
+}
+
+render();
+</script>
+</body>
+</html>
