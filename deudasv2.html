@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Mis Deudas">
+<meta name="theme-color" content="#0d0d1a">
+<title>Mis Deudas</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0d0d1a;--bg2:#13132a;--bg3:#1a1a35;--border:#252550;
+  --text:#f0f0ff;--text2:#8888bb;--text3:#44446a;
+  --green:#10e58a;--green-bg:rgba(16,229,138,0.08);--green-border:rgba(16,229,138,0.25);
+  --amber:#ffb340;--amber-bg:rgba(255,179,64,0.08);--amber-border:rgba(255,179,64,0.25);
+  --red:#ff4d6d;--red-bg:rgba(255,77,109,0.08);--red-border:rgba(255,77,109,0.25);
+  --blue:#5b8dee;--blue-bg:rgba(91,141,238,0.08);--blue-border:rgba(91,141,238,0.25);
+  --purple:#a855f7;
+  --accent:#7c6aff;--accent2:#c084fc;
+  --grad:linear-gradient(135deg,#7c6aff,#c084fc);
+  --grad-green:linear-gradient(135deg,#10e58a,#05c47a);
+  --grad-amber:linear-gradient(135deg,#ffb340,#ff8c00);
+  --grad-red:linear-gradient(135deg,#ff4d6d,#cc0033);
+  --radius:18px;--radius-sm:13px;--radius-xs:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:'Plus Jakarta Sans',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overscroll-behavior:none}
+body::before{content:'';position:fixed;inset:0;background:
+  radial-gradient(ellipse 70% 50% at 50% -5%,rgba(124,106,255,0.13) 0%,transparent 70%),
+  radial-gradient(ellipse 50% 40% at 95% 90%,rgba(192,132,252,0.07) 0%,transparent 60%),
+  radial-gradient(ellipse 40% 30% at 5% 60%,rgba(16,229,138,0.04) 0%,transparent 60%);
+  pointer-events:none;z-index:0}
+.app{max-width:430px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom);position:relative;z-index:1}
+
+/* TOPBAR */
+.topbar{padding:54px 20px 16px;display:flex;align-items:center;justify-content:space-between}
+.topbar-left h1{font-size:27px;font-weight:800;letter-spacing:-0.8px;background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.topbar-left p{font-size:12px;color:var(--text3);font-weight:500;margin-top:2px}
+.topbar-pill{background:var(--bg2);border:1px solid var(--border);border-radius:30px;padding:7px 13px;display:flex;align-items:center;gap:7px;font-size:12px;font-weight:700;color:var(--accent2)}
+.live-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 6px var(--green);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+.content{flex:1;overflow-y:auto;padding:0 16px 8px;-webkit-overflow-scrolling:touch}
+
+/* NAV */
+.nav{display:flex;padding:8px;padding-bottom:calc(8px + env(safe-area-inset-bottom));background:rgba(13,13,26,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-top:1px solid var(--border);position:sticky;bottom:0;gap:4px}
+.nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;border:none;background:transparent;color:var(--text3);font-family:'Plus Jakarta Sans',sans-serif;font-size:9px;font-weight:700;cursor:pointer;padding:8px 4px 6px;border-radius:14px;transition:all .2s;letter-spacing:.3px;text-transform:uppercase}
+.nav button .icon{font-size:20px;line-height:1;transition:transform .25s cubic-bezier(.34,1.56,.64,1)}
+.nav button.active{color:#fff;background:linear-gradient(135deg,rgba(124,106,255,.25),rgba(192,132,252,.15));border:1px solid rgba(124,106,255,.3)}
+.nav button.active .icon{transform:scale(1.2)}
+
+/* SCREENS */
+.screen{display:none;animation:slideUp .28s cubic-bezier(.22,1,.36,1)}.screen.show{display:block}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px;margin-bottom:14px;position:relative;overflow:hidden}
+.card::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(124,106,255,.3),transparent);pointer-events:none}
+.card-title{font-size:11px;font-weight:700;color:var(--text3);margin-bottom:16px;text-transform:uppercase;letter-spacing:1.3px;display:flex;align-items:center;gap:7px}
+.card-title-icon{width:20px;height:20px;border-radius:6px;background:var(--grad);display:flex;align-items:center;justify-content:center;font-size:10px}
+
+/* FIELDS */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;color:var(--text2);margin-bottom:7px;font-weight:600}
+.field input,.field select{width:100%;padding:13px 15px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;-webkit-appearance:none;appearance:none;transition:all .2s}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent);background:#1e1e40;box-shadow:0 0 0 3px rgba(124,106,255,.15)}
+.field input::placeholder{color:var(--text3)}
+.field select option{background:var(--bg3)}
+.monto-wrap{position:relative}
+.monto-prefix{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--accent2);font-weight:700;pointer-events:none}
+.monto-wrap input{padding-left:30px !important}
+
+/* BUTTONS */
+.btn{width:100%;padding:15px;background:var(--grad);color:#fff;border:none;border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:all .2s;box-shadow:0 4px 24px rgba(124,106,255,.3)}
+.btn:active{transform:scale(.97)}
+.btn.sec{background:var(--bg3);color:var(--text2);border:1px solid var(--border);box-shadow:none}
+.btn.danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);box-shadow:0 4px 16px rgba(255,77,109,.15)}
+
+/* TOAST */
+.toast{position:fixed;top:58px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--grad);color:#fff;padding:11px 24px;border-radius:30px;font-size:13px;font-weight:700;opacity:0;transition:all .3s cubic-bezier(.22,1,.36,1);z-index:999;white-space:nowrap;pointer-events:none;box-shadow:0 8px 32px rgba(124,106,255,.35)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);z-index:100;align-items:flex-end;justify-content:center}
+.modal-overlay.show{display:flex;animation:slideUp .25s ease}
+.modal{background:var(--bg2);border:1px solid var(--border);border-top:1px solid rgba(124,106,255,.3);border-radius:24px 24px 0 0;padding:26px 20px;padding-bottom:calc(26px + env(safe-area-inset-bottom));width:100%;max-width:430px}
+.modal h3{font-size:18px;font-weight:800;margin-bottom:8px}
+.modal p{font-size:14px;color:var(--text2);margin-bottom:22px;line-height:1.6}
+.modal-btns{display:flex;gap:10px}
+.modal-btns button{flex:1;padding:14px;border-radius:var(--radius-sm);font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;border:none}
+.modal-cancel{background:var(--bg3);color:var(--text2);border:1px solid var(--border)!important}
+.modal-confirm{background:var(--grad-red);color:#fff}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.metric{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:15px;position:relative;overflow:hidden}
+.metric-glow{position:absolute;top:-20px;right:-20px;width:65px;height:65px;border-radius:50%;opacity:.12;pointer-events:none}
+.metric.hi .metric-glow{background:var(--green)}.metric.ac .metric-glow{background:var(--accent)}.metric.bl .metric-glow{background:var(--blue)}.metric.am .metric-glow{background:var(--amber)}.metric.rd .metric-glow{background:var(--red)}
+.metric .val{font-size:17px;font-weight:800;font-family:'JetBrains Mono',monospace;letter-spacing:-.5px}
+.metric .lbl{font-size:10px;color:var(--text2);margin-top:4px;text-transform:uppercase;letter-spacing:.7px;font-weight:600}
+.metric.hi .val{color:var(--green)}.metric.ac .val{color:var(--accent2)}.metric.bl .val{color:var(--blue)}.metric.am .val{color:var(--amber)}.metric.rd .val{color:var(--red)}
+
+/* PROGRESS */
+.progress-wrap{background:var(--bg3);border-radius:8px;height:8px;overflow:hidden;margin:12px 0 5px;box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
+.progress-bar{height:100%;border-radius:8px;transition:width .7s cubic-bezier(.22,1,.36,1)}
+.progress-bar.ok{background:var(--grad-green)}.progress-bar.pend{background:var(--grad-amber)}
+
+/* AMORT TABLE */
+.amort-table{width:100%;border-collapse:collapse;font-size:13px}
+.amort-table th{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;font-weight:700;padding:6px 8px;text-align:right;border-bottom:1px solid var(--border)}
+.amort-table th:first-child{text-align:left}
+.amort-table td{padding:10px 8px;border-bottom:1px solid var(--border);text-align:right;font-family:'JetBrains Mono',monospace;vertical-align:middle}
+.amort-table td:first-child{text-align:left;font-family:'Plus Jakarta Sans',sans-serif;color:var(--text2)}
+.amort-table tr:last-child td{border-bottom:none}
+.amort-table .td-cuota{color:var(--text)}.amort-table .td-interes{color:var(--red)}.amort-table .td-capital{color:var(--green)}.amort-table .td-saldo{color:var(--text);font-weight:600}.amort-table .td-extra{color:var(--accent2)}
+.amort-table tr.registrado{background:rgba(124,106,255,.04)}
+
+/* LIST ROW */
+.list-row{display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:all .15s}
+.list-row:last-child{border-bottom:none}
+.list-row:active{opacity:.6}
+.list-row .rname{font-size:15px;font-weight:600}
+.list-row .rsub{font-size:12px;color:var(--text2);margin-top:2px;font-family:'JetBrains Mono',monospace}
+
+/* BACK */
+.back{display:flex;align-items:center;gap:8px;color:var(--text2);font-size:14px;cursor:pointer;padding:4px 0 16px;border:none;background:none;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600}
+.back-arrow{width:30px;height:30px;border-radius:10px;background:var(--bg3);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:14px}
+
+/* EMPTY */
+.empty{text-align:center;color:var(--text3);font-size:14px;padding:36px 16px;line-height:1.8}
+.empty-icon{font-size:38px;margin-bottom:10px;display:block}
+
+/* BADGE */
+.badge{display:inline-block;font-size:11px;padding:4px 11px;border-radius:20px;font-weight:700}
+.badge.ok{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.badge.pend{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+
+/* SEP */
+.sep{height:1px;background:var(--border);margin:16px 0}
+
+/* AGENDA */
+.agenda-dia{display:flex;gap:14px;padding:12px 4px;border-bottom:1px solid var(--border);align-items:flex-start}
+.agenda-dia:last-child{border-bottom:none}
+.agenda-dia.agenda-hoy{background:var(--amber-bg);border:1px solid var(--amber-border);border-radius:var(--radius-sm);padding:12px;margin-bottom:8px}
+.agenda-fecha-col{min-width:50px;text-align:center;padding-top:2px}
+.agenda-dia-num{font-size:26px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1}
+.agenda-dia-num-hoy{background:var(--grad-amber);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.agenda-dia-sem{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-top:3px;font-weight:700}
+.agenda-clientes{flex:1;display:flex;flex-direction:column;gap:8px}
+.agenda-pill{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:11px 13px;cursor:pointer;transition:all .2s;display:flex;justify-content:space-between;align-items:center;gap:8px;position:relative;overflow:hidden}
+.agenda-pill::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--grad-amber);border-radius:3px 0 0 3px}
+.agenda-pill.pagado{background:var(--green-bg);border-color:var(--green-border)}
+.agenda-pill.pagado::before{background:var(--grad-green)}
+.agenda-pill.atrasado{background:var(--red-bg);border-color:var(--red-border)}
+.agenda-pill.atrasado::before{background:var(--grad-red)}
+.agenda-pill:active{transform:scale(.98)}
+.agenda-pill-nombre{font-size:14px;font-weight:600}
+.info-box{border-radius:var(--radius-sm);padding:13px 15px;font-size:13px;line-height:1.7;font-weight:500;margin-top:10px}
+.info-box.blue{background:var(--blue-bg);border:1px solid var(--blue-border);color:var(--blue)}
+.info-box.green{background:var(--green-bg);border:1px solid var(--green-border);color:var(--green);text-align:center}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="modal" onclick="cerrarModal(event)">
+  <div class="modal">
+    <h3 id="modal-titulo">¿Confirmar?</h3>
+    <p id="modal-texto">Esta acción no se puede deshacer.</p>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="cerrarModal()">Cancelar</button>
+      <button class="modal-confirm" id="modal-ok">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-left">
+      <h1>Mis Deudas</h1>
+      <p>Control de pagos</p>
+    </div>
+    <div class="topbar-pill"><span class="live-dot"></span>Activo</div>
+  </div>
+  <div class="content">
+
+    <!-- PAGAR -->
+    <div class="screen show" id="sc-pagar">
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">💸</span>Registrar pago mensual</div>
+        <div class="field">
+          <label>Préstamo</label>
+          <select id="p-deuda" onchange="actualizarInfoDeuda()">
+            <option value="">Seleccionar préstamo...</option>
+          </select>
+        </div>
+        <div id="p-info-deuda" style="display:none">
+          <div class="metrics" style="margin-bottom:14px">
+            <div class="metric rd"><div class="metric-glow"></div><div class="val" id="p-saldo-actual">₡0</div><div class="lbl">Saldo actual</div></div>
+            <div class="metric am"><div class="metric-glow"></div><div class="val" id="p-cuota-ref">₡0</div><div class="lbl">Cuota mensual</div></div>
+          </div>
+        </div>
+        <div class="field">
+          <label>Mes y año del pago</label>
+          <input type="month" id="p-mes" style="color-scheme:dark">
+        </div>
+        <div class="field">
+          <label>Monto pagado este mes</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="p-monto" placeholder="0" inputmode="numeric" oninput="formatearMiles(this);calcularPreview()">
+          </div>
+        </div>
+        <div id="p-preview" style="display:none">
+          <div class="metrics" style="margin-bottom:6px">
+            <div class="metric rd"><div class="metric-glow"></div><div class="val" id="prev-interes">₡0</div><div class="lbl">Va a interés</div></div>
+            <div class="metric hi"><div class="metric-glow"></div><div class="val" id="prev-capital">₡0</div><div class="lbl">Baja capital</div></div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);text-align:center;margin-bottom:10px">Nuevo saldo: <span id="prev-saldo" style="color:var(--text);font-weight:700;font-family:'JetBrains Mono',monospace"></span></div>
+        </div>
+        <div class="field">
+          <label>Abono extra al capital (opcional)</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="p-extra" placeholder="0" inputmode="numeric" oninput="formatearMiles(this);calcularPreview()">
+          </div>
+        </div>
+        <div class="field">
+          <label>Nota (opcional)</label>
+          <input type="text" id="p-nota" placeholder="Ej: Pago con bono, abono extra...">
+        </div>
+        <button class="btn" onclick="registrarPago()">✓ Guardar pago</button>
+      </div>
+    </div>
+
+    <!-- AGENDA -->
+    <div class="screen" id="sc-agenda">
+      <div id="agenda-body"></div>
+    </div>
+
+    <!-- HISTORIAL -->
+    <div class="screen" id="sc-historial">
+      <div id="amort-lista"></div>
+      <div id="amort-detalle" style="display:none"></div>
+    </div>
+
+    <!-- PRÉSTAMOS -->
+    <div class="screen" id="sc-prestamos">
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">➕</span>Agregar préstamo</div>
+        <div class="field">
+          <label>Nombre del préstamo</label>
+          <input type="text" id="pr-nombre" placeholder="Ej: Banco Nacional, Casa, Auto...">
+        </div>
+        <div class="field">
+          <label>Capital inicial</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="pr-capital" placeholder="0" inputmode="numeric" oninput="formatearMiles(this)">
+          </div>
+        </div>
+        <div class="field">
+          <label>Tasa de interés anual (%)</label>
+          <input type="number" id="pr-tasa" placeholder="Ej: 20" inputmode="decimal" step="0.1">
+        </div>
+        <div class="field">
+          <label>Cuota mensual pactada</label>
+          <div class="monto-wrap">
+            <span class="monto-prefix">₡</span>
+            <input type="text" id="pr-cuota" placeholder="0" inputmode="numeric" oninput="formatearMiles(this)">
+          </div>
+        </div>
+        <div class="field">
+          <label>Fecha de inicio del préstamo</label>
+          <input type="month" id="pr-inicio" style="color-scheme:dark">
+        </div>
+        <div class="field">
+          <label>Día de pago mensual (1–28)</label>
+          <input type="number" id="pr-dia-pago" placeholder="Ej: 15" min="1" max="28" inputmode="numeric">
+        </div>
+        <button class="btn" onclick="agregarPrestamo()">Agregar préstamo</button>
+      </div>
+      <div class="card">
+        <div class="card-title"><span class="card-title-icon">📋</span>Mis préstamos</div>
+        <div id="lista-prestamos"><div class="empty"><span class="empty-icon">🏦</span>Aún no hay préstamos</div></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <button class="active" onclick="go('pagar')"><span class="icon">💸</span>Pagar</button>
+    <button onclick="go('agenda')"><span class="icon">📅</span>Agenda</button>
+    <button onclick="go('historial')"><span class="icon">📊</span>Historial</button>
+    <button onclick="go('prestamos')"><span class="icon">🏦</span>Préstamos</button>
+  </div>
+</div>
+
+<script>
+const KEY='deudas-v2';
+let D={prestamos:[],pagos:[]};
+
+const fmt=n=>'₡'+Math.round(n).toLocaleString('es-CR');
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const MESES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const DIAS_SEM=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+const MESES_CORTO=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function formatearMiles(el){
+  const raw=el.value.replace(/[^\d]/g,'');
+  if(!raw){el.value='';return;}
+  el.value=parseInt(raw,10).toLocaleString('es-CR');
+}
+function leerMiles(id){
+  const raw=document.getElementById(id).value.replace(/[^\d]/g,'');
+  return raw?parseInt(raw,10):0;
+}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(D));}catch(e){}}
+function load(){
+  try{const r=localStorage.getItem(KEY);if(r)D=JSON.parse(r);}catch(e){}
+  D.prestamos=D.prestamos||[];D.pagos=D.pagos||[];
+  const hoy=new Date();
+  const mesStr=hoy.getFullYear()+'-'+(String(hoy.getMonth()+1).padStart(2,'0'));
+  document.getElementById('p-mes').value=mesStr;
+  renderAll();
+}
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+function confirmar(titulo,texto,cb){
+  document.getElementById('modal-titulo').textContent=titulo;
+  document.getElementById('modal-texto').textContent=texto;
+  document.getElementById('modal-ok').onclick=()=>{cerrarModal();cb();};
+  document.getElementById('modal').classList.add('show');
+}
+function cerrarModal(e){
+  if(e&&e.target!==document.getElementById('modal'))return;
+  document.getElementById('modal').classList.remove('show');
+}
+function go(sc){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('show'));
+  document.querySelectorAll('.nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sc-'+sc).classList.add('show');
+  const idx={pagar:0,agenda:1,historial:2,prestamos:3}[sc];
+  document.querySelectorAll('.nav button')[idx].classList.add('active');
+  if(sc==='agenda')renderAgenda();
+  if(sc==='historial')renderHistorialLista();
+  if(sc==='prestamos')renderListaPrestamos();
+  if(sc==='pagar')renderSelectDeuda();
+  document.querySelector('.content').scrollTop=0;
+}
+
+/* ── UTILIDADES ── */
+function saldoActual(pid){
+  const p=D.prestamos.find(x=>x.id===pid);
+  if(!p)return 0;
+  const pagos=D.pagos.filter(pg=>pg.prestamoId===pid).sort((a,b)=>a.mes.localeCompare(b.mes));
+  let saldo=p.capital;
+  pagos.forEach(pg=>{
+    const interes=saldo*(p.tasa/100/12);
+    const bajaCapital=Math.max(0,pg.monto-interes);
+    saldo=Math.max(0,saldo-bajaCapital-(pg.extra||0));
+  });
+  return saldo;
+}
+
+function calcularAmortizacion(pid){
+  const p=D.prestamos.find(x=>x.id===pid);
+  if(!p)return[];
+  const pagos=D.pagos.filter(pg=>pg.prestamoId===pid).sort((a,b)=>a.mes.localeCompare(b.mes));
+  const resultado=[];
+  let saldo=p.capital;
+  pagos.forEach(pg=>{
+    const interes=Math.round(saldo*(p.tasa/100/12));
+    const bajaCapital=Math.max(0,pg.monto-interes);
+    const extra=pg.extra||0;
+    saldo=Math.max(0,saldo-bajaCapital-extra);
+    resultado.push({mes:pg.mes,monto:pg.monto,interes,capital:bajaCapital,extra,saldo,nota:pg.nota||''});
+  });
+  return resultado;
+}
+
+/* ── PAGAR ── */
+function renderSelectDeuda(){
+  const sel=document.getElementById('p-deuda');
+  sel.innerHTML='<option value="">Seleccionar préstamo...</option>';
+  D.prestamos.forEach(p=>{
+    const s=saldoActual(p.id);
+    const o=document.createElement('option');
+    o.value=p.id;o.textContent=p.nombre+' ('+fmt(s)+')';
+    sel.appendChild(o);
+  });
+  actualizarInfoDeuda();
+}
+function actualizarInfoDeuda(){
+  const pid=document.getElementById('p-deuda').value;
+  const info=document.getElementById('p-info-deuda');
+  if(!pid){info.style.display='none';document.getElementById('p-preview').style.display='none';return;}
+  const p=D.prestamos.find(x=>x.id===pid);
+  const s=saldoActual(pid);
+  document.getElementById('p-saldo-actual').textContent=fmt(s);
+  document.getElementById('p-cuota-ref').textContent=fmt(p.cuota);
+  info.style.display='block';
+  calcularPreview();
+}
+function calcularPreview(){
+  const pid=document.getElementById('p-deuda').value;
+  if(!pid){document.getElementById('p-preview').style.display='none';return;}
+  const p=D.prestamos.find(x=>x.id===pid);
+  const monto=leerMiles('p-monto');
+  const extra=leerMiles('p-extra');
+  if(!monto){document.getElementById('p-preview').style.display='none';return;}
+  const s=saldoActual(pid);
+  const interes=Math.round(s*(p.tasa/100/12));
+  const capital=Math.max(0,monto-interes);
+  const nuevoSaldo=Math.max(0,s-capital-extra);
+  document.getElementById('prev-interes').textContent=fmt(interes);
+  document.getElementById('prev-capital').textContent=fmt(capital);
+  document.getElementById('prev-saldo').textContent=fmt(nuevoSaldo);
+  document.getElementById('p-preview').style.display='block';
+}
+function registrarPago(){
+  const pid=document.getElementById('p-deuda').value;
+  const mes=document.getElementById('p-mes').value;
+  const monto=leerMiles('p-monto');
+  const extra=leerMiles('p-extra');
+  const nota=document.getElementById('p-nota').value.trim();
+  if(!pid){toast('Selecciona un préstamo');return;}
+  if(!mes){toast('Selecciona el mes');return;}
+  if(!monto||monto<=0){toast('Ingresa el monto pagado');return;}
+  if(D.pagos.find(pg=>pg.prestamoId===pid&&pg.mes===mes)){toast('Ya hay un pago registrado ese mes');return;}
+  D.pagos.push({id:uid(),prestamoId:pid,mes,monto,extra,nota,ts:new Date().toISOString()});
+  save();
+  document.getElementById('p-monto').value='';
+  document.getElementById('p-extra').value='';
+  document.getElementById('p-nota').value='';
+  document.getElementById('p-preview').style.display='none';
+  const[y,m]=mes.split('-').map(Number);
+  const siguiente=new Date(y,m,1);
+  const sigStr=siguiente.getFullYear()+'-'+(String(siguiente.getMonth()+1).padStart(2,'0'));
+  document.getElementById('p-mes').value=sigStr;
+  actualizarInfoDeuda();
+  toast('Pago registrado ✓');
+}
+
+/* ── AGENDA SEMANAL ── */
+function fechasPagoSemana(p, lunesDate, domingoDate){
+  // Retorna fechas del préstamo que caen en el rango lun-dom
+  const diaPago=parseInt(p.diaPago)||1;
+  const anio=lunesDate.getFullYear();
+  const fechas=[];
+  // Checar mes actual y siguiente (por si la semana cruza mes)
+  for(let m=lunesDate.getMonth();m<=lunesDate.getMonth()+1;m++){
+    const maxDia=new Date(anio,m+1,0).getDate();
+    const f=new Date(anio,m,Math.min(diaPago,maxDia));
+    f.setHours(0,0,0,0);
+    if(f>=lunesDate&&f<=domingoDate) fechas.push(new Date(f));
+  }
+  return fechas;
+}
+
+function fmtKeyFecha(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function mesFechaKey(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function pagoPorMes(pid, mesKey){
+  return D.pagos.find(pg=>pg.prestamoId===pid && pg.mes===mesKey);
+}
+
+function renderAgenda(){
+  const el=document.getElementById('agenda-body');
+  if(!D.prestamos.length){
+    el.innerHTML='<div class="card"><div class="empty"><span class="empty-icon">🏦</span>Agrega préstamos en la pestaña 🏦</div></div>';
+    return;
+  }
+
+  const hoyDate=new Date();
+  hoyDate.setHours(0,0,0,0);
+  const hoyKey=fmtKeyFecha(hoyDate);
+
+  // Semana actual lun-dom
+  const dow=hoyDate.getDay();
+  const diffLunes=dow===0?-6:1-dow;
+  const lunesDate=new Date(hoyDate);
+  lunesDate.setDate(hoyDate.getDate()+diffLunes);
+  const domingoDate=new Date(lunesDate);
+  domingoDate.setDate(lunesDate.getDate()+6);
+
+  // Semana pasada
+  const lunesPasado=new Date(lunesDate);
+  lunesPasado.setDate(lunesDate.getDate()-7);
+  const domingoPasado=new Date(lunesDate);
+  domingoPasado.setDate(lunesDate.getDate()-1);
+
+  const lunesLabel=`${lunesDate.getDate()} ${MESES_CORTO[lunesDate.getMonth()]}`;
+  const domingoLabel=`${domingoDate.getDate()} ${MESES_CORTO[domingoDate.getMonth()]}`;
+
+  // ── Atrasados: tenían pago la semana pasada y no pagaron ──
+  const atrasados=[];
+  D.prestamos.forEach(p=>{
+    const fechasPasadas=fechasPagoSemana(p, lunesPasado, domingoPasado);
+    if(!fechasPasadas.length) return;
+    // Verificar si pagó en el mes correspondiente a la semana pasada
+    const mesPasadoKey=mesFechaKey(lunesPasado);
+    const yaPage=pagoPorMes(p.id, mesPasadoKey);
+    if(!yaPage) atrasados.push(p);
+  });
+
+  // ── Semana actual: préstamos con fecha de pago en esta semana ──
+  const mapa={};
+  D.prestamos.forEach(p=>{
+    fechasPagoSemana(p, lunesDate, domingoDate).forEach(f=>{
+      const key=fmtKeyFecha(f);
+      if(!mapa[key]) mapa[key]={f,prestamos:[]};
+      mapa[key].prestamos.push(p);
+    });
+  });
+  const keys=Object.keys(mapa).sort();
+
+  const totalSemana=Object.values(mapa).reduce((s,{prestamos})=>
+    s+prestamos.reduce((ss,p)=>ss+p.cuota,0),0);
+
+  let html='';
+
+  // Sección atrasados
+  if(atrasados.length){
+    const totalAtr=atrasados.reduce((s,p)=>s+p.cuota,0);
+    html+=`<div style="background:var(--red-bg);border:1px solid var(--red-border);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div>
+          <div style="font-size:11px;color:var(--red);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px">⚠️ Pendientes semana pasada</div>
+          <div style="font-size:12px;color:var(--text3)">${lunesPasado.getDate()} ${MESES_CORTO[lunesPasado.getMonth()]} – ${domingoPasado.getDate()} ${MESES_CORTO[domingoPasado.getMonth()]}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:10px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:2px">Sin pagar</div>
+          <div style="font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--red)">${fmt(totalAtr)}</div>
+        </div>
+      </div>
+      ${atrasados.map(p=>`
+        <div class="agenda-pill atrasado" onclick="go('pagar');setTimeout(()=>{document.getElementById('p-deuda').value='${p.id}';actualizarInfoDeuda();},80)" style="margin-bottom:7px">
+          <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+            <div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;background:var(--red-bg);border:1.5px solid var(--red);color:var(--red);font-weight:700">!</div>
+            <div>
+              <div class="agenda-pill-nombre">${p.nombre}</div>
+              <div style="font-size:10px;color:var(--red);font-weight:600;margin-top:1px">No pagó la semana pasada</div>
+            </div>
+          </div>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:var(--red)">${fmt(p.cuota)}</span>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  // Banner semana actual
+  html+=`<div style="background:linear-gradient(135deg,rgba(124,106,255,.12),rgba(192,132,252,.06));border:1px solid rgba(124,106,255,.25);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center">
+    <div>
+      <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Semana en curso</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text)">${lunesLabel} – ${domingoLabel}</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:11px;color:var(--text3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:3px">Total a pagar</div>
+      <div style="font-size:16px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--green)">${fmt(totalSemana)}</div>
+    </div>
+  </div>`;
+
+  if(!keys.length){
+    html+=`<div class="card"><div class="empty"><span class="empty-icon">🎉</span>¡Sin pagos esta semana!</div></div>`;
+    el.innerHTML=html;return;
+  }
+
+  keys.forEach(key=>{
+    const {f, prestamos}=mapa[key];
+    const esHoy=key===hoyKey;
+    const subtotal=prestamos.reduce((s,p)=>s+p.cuota,0);
+    const mesKey=mesFechaKey(f);
+
+    const pagados=prestamos.filter(p=>pagoPorMes(p.id, mesKey));
+    const pendientes=prestamos.filter(p=>!pagoPorMes(p.id, mesKey));
+
+    html+=`<div class="agenda-dia ${esHoy?'agenda-hoy':''}">
+      <div class="agenda-fecha-col">
+        <div class="agenda-dia-num ${esHoy?'agenda-dia-num-hoy':''}">${f.getDate()}</div>
+        <div class="agenda-dia-sem">${DIAS_SEM[f.getDay()].slice(0,3)}</div>
+        ${esHoy?`<div style="font-size:9px;background:var(--amber);color:#000;border-radius:4px;padding:1px 4px;margin-top:4px;font-weight:700">HOY</div>`:''}
+      </div>
+      <div class="agenda-clientes">
+        ${prestamos.map(p=>{
+          const pago=pagoPorMes(p.id, mesKey);
+          return `<div class="agenda-pill ${pago?'pagado':''}" onclick="go('pagar');setTimeout(()=>{document.getElementById('p-deuda').value='${p.id}';actualizarInfoDeuda();},80)">
+            <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:0">
+              <div style="width:22px;height:22px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:12px;
+                ${pago?'background:var(--green-bg);border:1.5px solid var(--green)':'background:var(--amber-bg);border:1.5px solid var(--amber)'}">
+                ${pago?'✓':'·'}
+              </div>
+              <div>
+                <div class="agenda-pill-nombre" style="${pago?'text-decoration:line-through;opacity:.6':''}">${p.nombre}</div>
+                ${pago?`<div style="font-size:10px;color:var(--green);font-weight:600;margin-top:1px">Ya pagado este mes ✓</div>`:`<div style="font-size:10px;color:var(--text3);font-weight:500;margin-top:1px">Día ${p.diaPago||1} del mes · ${fmt(p.cuota)}</div>`}
+              </div>
+            </div>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:${pago?'var(--text3)':'var(--amber)'};">${fmt(p.cuota)}</span>
+          </div>`;
+        }).join('')}
+        <div style="display:flex;justify-content:space-between;padding-top:6px;font-size:11px;font-family:'JetBrains Mono',monospace;color:var(--text3)">
+          <span>
+            ${pagados.length>0?`<span style="color:var(--green);font-weight:700">✓ ${pagados.length} pagado${pagados.length>1?'s':''}</span>`:''}
+            ${pagados.length>0&&pendientes.length>0?' · ':''}
+            ${pendientes.length>0?`<span style="color:var(--amber);font-weight:700">⏳ ${pendientes.length} pendiente${pendientes.length>1?'s':''}</span>`:''}
+          </span>
+          <span>Total: <span style="color:var(--amber);font-weight:700">${fmt(subtotal)}</span></span>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  el.innerHTML=html;
+}
+
+/* ── HISTORIAL ── */
+function renderHistorialLista(){
+  const lista=document.getElementById('amort-lista');
+  const det=document.getElementById('amort-detalle');
+  det.style.display='none';lista.style.display='block';
+
+  // Resumen general
+  const totalDeudaInicial=D.prestamos.reduce((s,p)=>s+p.capital,0);
+  const totalSaldo=D.prestamos.reduce((s,p)=>s+saldoActual(p.id),0);
+  const totalPagado=totalDeudaInicial-totalSaldo;
+  const pct=totalDeudaInicial>0?Math.round(totalPagado/totalDeudaInicial*100):0;
+
+  let html=`<div class="metrics">
+    <div class="metric rd"><div class="metric-glow"></div><div class="val">${fmt(totalSaldo)}</div><div class="lbl">💰 Saldo total</div></div>
+    <div class="metric hi"><div class="metric-glow"></div><div class="val">${fmt(totalPagado)}</div><div class="lbl">✅ Pagado</div></div>
+  </div>
+  <div class="card" style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px">
+      <span>Progreso total</span><span>${pct}%</span>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar ${pct>50?'ok':'pend'}" style="width:${Math.max(1,pct)}%"></div></div>
+  </div>`;
+
+  if(!D.prestamos.length){
+    html+='<div class="card"><div class="empty"><span class="empty-icon">📊</span>Agrega préstamos para ver el historial</div></div>';
+    lista.innerHTML=html;return;
+  }
+
+  html+=`<div class="card"><div class="card-title"><span class="card-title-icon">📋</span>Mis préstamos</div>`;
+  D.prestamos.forEach(p=>{
+    const s=saldoActual(p.id);
+    const nPagos=D.pagos.filter(pg=>pg.prestamoId===p.id).length;
+    html+=`<div class="list-row" onclick="verHistorial('${p.id}')">
+      <div>
+        <div class="rname">${p.nombre}</div>
+        <div class="rsub">${fmt(s)} saldo · ${nPagos} pagos</div>
+      </div>
+      <div style="color:var(--text3);font-size:20px">›</div>
+    </div>`;
+  });
+  html+='</div>';
+  lista.innerHTML=html;
+}
+
+function verHistorial(pid){
+  const lista=document.getElementById('amort-lista');
+  const det=document.getElementById('amort-detalle');
+  lista.style.display='none';det.style.display='block';
+  const p=D.prestamos.find(x=>x.id===pid);
+  const rows=calcularAmortizacion(pid);
+  const saldoVal=saldoActual(pid);
+  const totalInteres=rows.reduce((s,r)=>s+r.interes,0);
+  const totalCapital=rows.reduce((s,r)=>s+r.capital+r.extra,0);
+  const pct=Math.round(totalCapital/p.capital*100);
+
+  let tabla='';
+  if(rows.length){
+    tabla=`<div style="overflow-x:auto">
+    <table class="amort-table">
+      <thead><tr>
+        <th>Mes</th><th>Pagado</th><th>Interés</th><th>Capital</th><th>Extra</th><th>Saldo</th>
+      </tr></thead>
+      <tbody>${rows.map(r=>`
+        <tr class="registrado">
+          <td>${MESES[parseInt(r.mes.split('-')[1])-1].slice(0,3)} ${r.mes.split('-')[0]}</td>
+          <td class="td-cuota">${fmt(r.monto)}</td>
+          <td class="td-interes">${fmt(r.interes)}</td>
+          <td class="td-capital">${fmt(r.capital)}</td>
+          <td class="td-extra">${r.extra>0?fmt(r.extra):'—'}</td>
+          <td class="td-saldo">${fmt(r.saldo)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table></div>`;
+  }
+
+  det.innerHTML=`
+    <button class="back" onclick="renderHistorialLista()"><span class="back-arrow">←</span> Volver</button>
+    <div class="card">
+      <div style="font-size:18px;font-weight:800;margin-bottom:14px">${p.nombre}</div>
+      <div class="metrics">
+        <div class="metric rd"><div class="metric-glow"></div><div class="val">${fmt(saldoVal)}</div><div class="lbl">Saldo actual</div></div>
+        <div class="metric hi"><div class="metric-glow"></div><div class="val">${fmt(totalCapital)}</div><div class="lbl">Capital bajado</div></div>
+        <div class="metric am"><div class="metric-glow"></div><div class="val">${fmt(totalInteres)}</div><div class="lbl">Interés pagado</div></div>
+        <div class="metric ac"><div class="metric-glow"></div><div class="val">${rows.length}</div><div class="lbl">Meses pagados</div></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px">
+        <span>Capital pagado</span><span>${pct}%</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar ${pct>50?'ok':'pend'}" style="width:${Math.max(1,pct)}%"></div></div>
+      <div class="info-box blue" style="margin-top:10px">
+        📅 Día de pago: <strong>día ${p.diaPago||1} de cada mes</strong> · Cuota: <strong>${fmt(p.cuota)}</strong>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="card-title-icon">📊</span>Amortización mes a mes</div>
+      ${rows.length?tabla:'<div class="empty">Sin pagos registrados aún</div>'}
+    </div>
+    <button class="btn danger" style="margin-bottom:16px" onclick="pedirEliminar('${pid}')">🗑 Eliminar préstamo</button>
+    <div style="height:16px"></div>`;
+  document.querySelector('.content').scrollTop=0;
+}
+
+/* ── PRÉSTAMOS ── */
+function agregarPrestamo(){
+  const nombre=document.getElementById('pr-nombre').value.trim();
+  const capital=leerMiles('pr-capital');
+  const tasa=parseFloat(document.getElementById('pr-tasa').value);
+  const cuota=leerMiles('pr-cuota');
+  const inicio=document.getElementById('pr-inicio').value;
+  const diaPago=parseInt(document.getElementById('pr-dia-pago').value)||1;
+  if(!nombre){toast('Escribe el nombre');return;}
+  if(!capital){toast('Ingresa el capital inicial');return;}
+  if(!tasa){toast('Ingresa la tasa de interés');return;}
+  if(!cuota){toast('Ingresa la cuota mensual');return;}
+  if(!inicio){toast('Selecciona la fecha de inicio');return;}
+  if(diaPago<1||diaPago>28){toast('El día de pago debe ser entre 1 y 28');return;}
+  D.prestamos.push({id:uid(),nombre,capital,tasa,cuota,inicio,diaPago});
+  save();
+  document.getElementById('pr-nombre').value='';
+  document.getElementById('pr-capital').value='';
+  document.getElementById('pr-tasa').value='';
+  document.getElementById('pr-cuota').value='';
+  document.getElementById('pr-dia-pago').value='';
+  toast(nombre+' agregado ✓');
+  renderListaPrestamos();renderSelectDeuda();
+}
+
+function renderListaPrestamos(){
+  const el=document.getElementById('lista-prestamos');
+  if(!D.prestamos.length){
+    el.innerHTML='<div class="empty"><span class="empty-icon">🏦</span>Aún no hay préstamos</div>';return;
+  }
+  el.innerHTML=D.prestamos.map(p=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:13px 0;border-bottom:1px solid var(--border)">
+      <div>
+        <div style="font-size:14px;font-weight:600">${p.nombre}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;font-family:'JetBrains Mono',monospace">${fmt(p.capital)} · ${p.tasa}% · cuota ${fmt(p.cuota)} · día ${p.diaPago||1}</div>
+      </div>
+      <button class="btn danger" style="width:auto;padding:7px 14px;font-size:12px;margin-top:0" onclick="pedirEliminar('${p.id}')">Quitar</button>
+    </div>`).join('')+'<div style="height:4px"></div>';
+}
+
+function pedirEliminar(id){
+  const p=D.prestamos.find(x=>x.id===id);
+  confirmar('Eliminar "'+p.nombre+'"','Se borrarán también todos los pagos de este préstamo.',()=>{
+    D.prestamos=D.prestamos.filter(x=>x.id!==id);
+    D.pagos=D.pagos.filter(pg=>pg.prestamoId!==id);
+    save();renderListaPrestamos();renderSelectDeuda();
+    renderHistorialLista();
+    toast('Eliminado');
+  });
+}
+
+function renderAll(){renderSelectDeuda();renderListaPrestamos();}
+load();
+</script>
+</body>
+</html>
