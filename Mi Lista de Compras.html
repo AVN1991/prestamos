@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Quicksand:wght@500;700&display=swap" rel="stylesheet"><title>Mi Lista de Compras</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#fff5f9;--g2:#f3e8ff;--card:#fffafc;--tx:#4a2c40;--mu:#a1738f;--ac:#e75a97;--ac2:#b78cf0;--ln:#f8d5e6;--need:#ffe8f1;--got:#efe3ff}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#241220;--g2:#1c1533;--card:#33192e;--tx:#ffe8f3;--mu:#c79ab6;--ac:#ff7eb3;--ac2:#b78cf0;--ln:#4d2a45;--need:#4a2240;--got:#3a2a5c}}
+:root[data-theme="dark"]{--bg:#241220;--g2:#1c1533;--card:#33192e;--tx:#ffe8f3;--mu:#c79ab6;--ac:#ff7eb3;--ac2:#b78cf0;--ln:#4d2a45;--need:#4a2240;--got:#3a2a5c}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.4 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:560px;margin:0 auto;padding:14px 14px 90px}
+h1{font-size:22px;margin:6px 0 10px}
+.tabs{display:flex;gap:6px;background:var(--ln);padding:4px;border-radius:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:2}
+.tabs button{flex:1;border:0;padding:10px;border-radius:9px;background:transparent;color:var(--tx);font-size:15px;font-weight:600}
+.tabs button.on{background:var(--card);box-shadow:0 1px 3px #0002}
+.badge{background:var(--ac);color:#fff;border-radius:99px;padding:1px 8px;font-size:12px;margin-left:4px}
+.add{display:flex;gap:6px;margin:12px 0}
+input,select{font:inherit;padding:10px;border:1px solid var(--ln);border-radius:10px;background:var(--card);color:var(--tx);min-width:0}
+.add input{flex:1}
+.btn{border:0;background:var(--ac);color:#fff;padding:10px 14px;border-radius:10px;font-weight:600;font-size:15px}
+.btn.g{background:var(--card);color:var(--tx);border:1px solid var(--ln)}
+h2{font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:var(--mu);margin:18px 4px 6px}
+.it{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--ln);border-radius:12px;padding:11px 12px;margin-bottom:6px}
+.it.need{background:var(--need)}.it.got{background:var(--got)}.it.got .n{text-decoration:line-through;opacity:.6}
+.n{flex:1;cursor:pointer}
+.chk{width:24px;height:24px;border-radius:50%;border:2px solid var(--ac);display:grid;place-items:center;color:#fff;font-size:14px;flex:none;cursor:pointer}
+.got .chk{background:var(--ac)}
+.q{display:flex;align-items:center;gap:4px}
+.q button{width:28px;height:28px;border-radius:8px;border:1px solid var(--ln);background:var(--card);color:var(--tx);font-size:16px}
+.x{background:none;border:0;color:var(--mu);font-size:18px;padding:4px}
+.st{font-size:12px;color:var(--mu)}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));background:var(--bg);border-top:1px solid var(--ln);display:flex;gap:8px;justify-content:center}
+.bar .btn{flex:1;max-width:260px}
+.ov{position:fixed;inset:0;background:#0008;display:grid;place-items:center;padding:16px;z-index:5}.pn{background:var(--card);border-radius:16px;padding:16px;width:100%;max-width:440px}.pn textarea{width:100%;height:220px;font:inherit;padding:10px;border:1px solid var(--ln);border-radius:10px;background:var(--bg);color:var(--tx)}.pn .r{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}.pn img{width:100%;max-height:52vh;object-fit:contain;border-radius:14px;display:block}.pn{max-height:92vh;overflow:auto}.pn a.btn{text-decoration:none;text-align:center}.empty{text-align:center;color:var(--mu);padding:40px 10px}
+
+body{font-family:'Quicksand',ui-rounded,system-ui,sans-serif;background:linear-gradient(160deg,var(--bg),var(--g2)) fixed}
+main{position:relative;z-index:1}
+.deco{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.deco span{position:absolute;bottom:-60px;opacity:.55;animation:up linear infinite}
+@keyframes up{0%{transform:translate(0,0) rotate(0)}50%{transform:translate(26px,-55vh) rotate(180deg)}100%{transform:translate(-10px,-115vh) rotate(360deg)}}
+h1{font-family:'Pacifico',cursive;font-weight:400;font-size:28px;text-align:center;color:var(--ac);text-shadow:0 2px 0 #fff6}
+h1 i{font-style:normal;display:inline-block;animation:bob 2s ease-in-out infinite}
+h1 i:last-child{animation-delay:.6s}
+@keyframes bob{50%{transform:translateY(-5px) scale(1.2)}}
+.tabs{background:var(--ln);border-radius:99px}
+.tabs button{border-radius:99px;transition:.25s}
+.tabs button.on{background:linear-gradient(135deg,var(--ac),var(--ac2));color:#fff;box-shadow:0 3px 10px #e75a9755}
+.it{border-radius:18px;border-color:var(--ln);box-shadow:0 3px 10px #e75a9714}.first .it{animation:pop .35s ease both}
+
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.96)}}
+.chk{border-color:var(--ac2)}
+.got .chk{background:linear-gradient(135deg,var(--ac),var(--ac2));animation:tick .4s}
+@keyframes tick{0%{transform:scale(.4)}60%{transform:scale(1.35)}}
+.btn{background:linear-gradient(135deg,var(--ac),var(--ac2));border-radius:99px;box-shadow:0 3px 10px #e75a9744;transition:.2s}
+.btn:active{transform:scale(.94)}
+.btn.g{background:var(--card);box-shadow:none}
+input,select{border-radius:99px;padding:10px 14px}
+h2{color:var(--ac);font-weight:700}
+h2::before{content:"🌸 "}
+.bar{z-index:4;background:linear-gradient(0deg,var(--bg) 60%,transparent);border:0}*{-webkit-tap-highlight-color:transparent}
+.pn{border-radius:24px}
+.empty{font-size:18px}
+.empty b{display:block;font-size:44px;animation:bob 2s infinite}
+@media (prefers-reduced-motion:reduce){*{animation:none!important}}
+</style></head><body><main>
+<div class="deco" id="deco"></div><h1><i>💖</i> Mi Lista de Compras <i>✨</i></h1>
+<div class="tabs"><button id="t1" onclick="tab(1)">Por comprar<span class="badge" id="cnt">0</span></button><button id="t0" onclick="tab(0)">Mis productos</button></div>
+<div class="add" id="addbox"><input id="nm" placeholder="Nuevo producto…" onkeydown="if(event.key==='Enter')addItem()"><select id="ct"></select><button class="btn" onclick="addItem()">+</button></div>
+<div id="list"></div>
+</main>
+<div class="bar" id="bar"></div><div id="ovl"></div>
+<script>
+const CATS=["Frutas y verduras","Carnes y pescado","Lácteos y huevos","Despensa","Bebidas y snacks","Limpieza","Higiene personal"];
+const SEED={
+0:["Papa","Naranja","Mandarina","Pera","Tomate","Chile dulce","Pepino","Sandía","Coco","Maíz dulce","Champiñones"],
+1:["Chuleta de cerdo","Costilla de cerdo","Fajitas de pollo","Muslito de ala","Filete de tilapia","Pescado para ceviche","Salchichón","Atún"],
+2:["Huevos","Leche","Queso semiduro","Queso mozzarella","Queso crema","Crema para cocinar","Yogurt"],
+3:["Pasta","Sazonador para res","Pistachos","Bizcocho","Galletas"],
+4:["Refresco en polvo","Patacones","Sangría"],
+5:["Detergente en polvo","Suavizante","Perlas aromatizantes","Toallitas desinfectantes","Insecticida","Bolsas plásticas"],
+6:["Papel higiénico","Toallas femeninas","Talco","Cepillo dental"]};
+const K="listaCompras.v1";let S,view=1;
+function load(){try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+if(!S||!S.length){S=[];let id=1;for(const c in SEED)SEED[c].forEach(n=>S.push({id:id++,n,c:+c,s:"ok",q:1}))}}
+function save(){try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}}
+function tab(v){view=v;render()}
+function esc(t){return t.replace(/[&<>"]/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[m]))}
+function tap(id){const i=S.find(x=>x.id===id);
+if(view===0)i.s=i.s==="ok"?"need":"ok";
+else i.s=i.s==="need"?"got":"need";
+save();render()}
+function qty(id,d){const i=S.find(x=>x.id===id);i.q=Math.max(1,i.q+d);save();render()}
+let first=true,armed=null;function sure(k){if(armed===k){armed=null;return true}armed=k;setTimeout(()=>{if(armed===k){armed=null;render()}},3000);render();return false}
+function del(id){if(sure("d"+id)){S=S.filter(x=>x.id!==id);save();render()}}
+function addItem(){const n=document.getElementById("nm").value.trim();if(!n)return;
+S.push({id:Date.now(),n,c:+document.getElementById("ct").value,s:view===1?"need":"ok",q:1});
+document.getElementById("nm").value="";save();render()}
+function finish(){if(sure("fin")){S.forEach(i=>{if(i.s==="got")i.s="ok"});save();render()}}
+function clearAll(){if(confirm("¿Vaciar la lista de compras?")){S.forEach(i=>i.s="ok");save();render()}}
+function text(){let t="🛒 Lista de compras\n";CATS.forEach((c,ci)=>{const a=S.filter(i=>i.c===ci&&i.s==="need");if(a.length){t+="\n"+c+"\n";a.forEach(i=>t+="• "+i.n+(i.q>1?" x"+i.q:"")+"\n")}});return t}
+
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath()}
+function draw(){return new Promise(res=>{
+const g=CATS.map((c,ci)=>[c,S.filter(i=>i.c===ci&&i.s!=="ok")]).filter(a=>a[1].length);
+const W=900,P=50;let H=290;g.forEach(a=>H+=80+a[1].length*78);H=Math.max(H,640);
+const cv=document.createElement("canvas");cv.width=W;cv.height=H;const x=cv.getContext("2d");
+const bg=x.createLinearGradient(0,0,W,H);bg.addColorStop(0,"#fff5f9");bg.addColorStop(1,"#f3e8ff");x.fillStyle=bg;x.fillRect(0,0,W,H);
+let z=7;const rnd=()=>(z=z*16807%2147483647)/2147483647,em=["🌸","💗","✨","🦋","🌷","💕","⭐","🌺"];
+x.textAlign="center";x.globalAlpha=.35;for(let k=0;k<Math.round(H/30);k++){x.font=(24+rnd()*36)+"px sans-serif";x.fillText(em[k%8],rnd()*W,rnd()*H)}x.globalAlpha=1;
+x.fillStyle="#e75a97";x.font="58px Pacifico, cursive";x.fillText("💖 Mi Lista de Compras ✨",W/2,105);
+const n=S.filter(i=>i.s!=="ok").length;x.fillStyle="#a1738f";x.font="600 26px Quicksand, system-ui";
+x.fillText(new Date().toLocaleDateString("es-CR",{weekday:"long",day:"numeric",month:"long"})+" · "+n+" productos",W/2,160);
+let y=200;x.textAlign="left";
+g.forEach(a=>{x.fillStyle="#e75a97";x.font="700 30px Quicksand, system-ui";x.fillText("🌸 "+a[0].toUpperCase(),P,y+40);y+=70;
+a[1].forEach(i=>{const got=i.s==="got";rr(x,P,y,W-2*P,66,33);x.fillStyle=got?"#efe3ffee":"#ffffffee";x.fill();x.strokeStyle="#f8d5e6";x.lineWidth=3;x.stroke();
+x.beginPath();x.arc(P+38,y+33,17,0,7);if(got){x.fillStyle="#b78cf0";x.fill();x.fillStyle="#fff";x.font="700 22px sans-serif";x.textAlign="center";x.fillText("✓",P+38,y+41);x.textAlign="left"}else{x.strokeStyle="#b78cf0";x.lineWidth=4;x.stroke()}
+x.globalAlpha=got?.55:1;x.fillStyle="#4a2c40";x.font="600 30px Quicksand, system-ui";x.fillText(i.n,P+75,y+44,W-2*P-230);
+if(got){x.fillRect(P+75,y+33,Math.min(x.measureText(i.n).width,W-2*P-230),2)}x.globalAlpha=1;
+if(i.q>1){rr(x,W-P-105,y+13,80,40,20);x.fillStyle="#e75a97";x.fill();x.fillStyle="#fff";x.font="700 26px Quicksand, system-ui";x.textAlign="center";x.fillText("x"+i.q,W-P-65,y+42);x.textAlign="left"}
+y+=78});y+=10});
+x.textAlign="center";x.fillStyle="#a1738f";x.font="600 24px Quicksand, system-ui";x.fillText("Hecho con 💕",W/2,H-35);
+cv.toBlob(b=>res([cv.toDataURL("image/png"),b]))})}
+function share(){document.getElementById("ovl").innerHTML=`<div class="ov" onclick="if(event.target===this)closeP()"><div class="pn"><div style="text-align:center;font-family:Pacifico,cursive;color:var(--ac);font-size:22px;margin-bottom:8px">Tu lista 💕</div><textarea id="ta" readonly style="position:fixed;left:-999px;opacity:0"></textarea><div class="r"><button class="btn" style="flex:1 1 100%" id="bg" onclick="big()">📸 Ver lista en grande</button><a class="btn g" style="flex:1;padding:10px 6px" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text())}">WhatsApp (texto)</a><button class="btn g" style="flex:1" id="cb" onclick="copy()">Copiar lista</button><button class="btn g" onclick="closeP()">Cerrar</button></div></div></div>`;document.getElementById("ta").value=text()}
+function big(){const bt=document.getElementById("bg");if(bt)bt.textContent="Preparando… ✨";
+const f=document.fonts&&document.fonts.load?Promise.race([document.fonts.load("58px Pacifico"),new Promise(r=>setTimeout(r,1500))]).catch(()=>{}):Promise.resolve();
+f.then(draw).then(([u])=>{document.getElementById("ovl").innerHTML=`<div class="ov" style="padding:0;background:#fff5f9;overflow:auto;place-items:start center" onclick="closeP()"><img src="${u}" alt="" style="width:100%;border-radius:0"></div>`})}
+function closeP(){document.getElementById("ovl").innerHTML=""}
+function copy(){const ta=document.getElementById("ta"),cb=document.getElementById("cb");ta.focus();ta.select();ta.setSelectionRange(0,99999);let ok=false;try{ok=document.execCommand("copy")}catch(e){}
+if(!ok){try{navigator.clipboard.writeText(ta.value);ok=true}catch(e){}}
+cb.textContent=ok?"¡Copiado!":"No se pudo copiar"}
+function row(i){const need=i.s==="need",got=i.s==="got";
+const qh=(view===1&&(need||got))?`<div class="q"><button onclick="qty(${i.id},-1)">−</button><b>${i.q}</b><button onclick="qty(${i.id},1)">+</button></div>`:"";
+const mark=view===1?`<div class="chk" onclick="tap(${i.id})">${got?"✓":""}</div>`:"";
+const st=view===0?`<span class="st">${need?"🟡 falta":""}</span>`:"";
+return `<div class="it ${view===0?(need?"need":""):(got?"got":"need")}">${mark}<span class="n" onclick="tap(${i.id})">${esc(i.n)}</span>${st}${qh}${view===0?`<button class="x" onclick="del(${i.id})">${armed==="d"+i.id?"¿Borrar?":"✕"}</button>`:""}</div>`}
+function render(){
+document.getElementById("t1").className=view===1?"on":"";document.getElementById("t0").className=view===0?"on":"";
+const n=S.filter(i=>i.s==="need").length;document.getElementById("cnt").textContent=n;
+let h="";
+CATS.forEach((c,ci)=>{const a=S.filter(i=>i.c===ci&&(view===0||i.s!=="ok"));if(a.length)h+=`<h2>${c}</h2>`+a.map(row).join("")});
+if(!h)h=`<div class="empty"><b>🌷</b>Nada por comprar.<br>Ve a "Mis productos" y toca lo que se te acabó.</div>`;
+else if(view===0)h=`<div class="st" style="margin:0 4px">Toca un producto cuando se te acabe para pasarlo a la lista.</div>`+h;
+const L=document.getElementById("list");L.className=first?"first":"";first=false;L.innerHTML=h;
+const b=document.getElementById("bar");
+b.innerHTML=view===1?(S.some(i=>i.s!=="ok")?`<button class="btn g" onclick="share()">Compartir</button><button class="btn" onclick="finish()">${armed==="fin"?"¿Seguro?":"Terminé"}</button>`:""):"";
+b.style.display=b.innerHTML?"flex":"none"}
+document.getElementById("ct").innerHTML=CATS.map((c,i)=>`<option value="${i}">${c}</option>`).join("");
+load();render();
+(function(){const e=["🌸","💗","✨","🦋","🌷","💕","⭐","🌺"],d=document.getElementById("deco");
+for(let i=0;i<16;i++){const x=document.createElement("span");x.textContent=e[i%e.length];
+x.style.cssText=`left:${Math.random()*95}%;font-size:${14+Math.random()*20}px;animation-duration:${14+Math.random()*16}s;animation-delay:-${Math.random()*25}s`;d.appendChild(x)}})();
+</script></body></html>
